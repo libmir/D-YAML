@@ -1,0 +1,13 @@
+version: 2.1
+
+orbs:
+  mirci: libmir/upload_docs@0.1.7
+
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - mirci/test:
+          filters:
+            tags:
+              only: /^v(\d)+(\.(\d)+)+$/

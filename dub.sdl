@@ -1,0 +1,8 @@
+name "mir-dyaml"
+description "YAML parser and emitter"
+homepage "https://github.com/dlang-community/D-YAML"
+authors "Ferdinand Majerech" "Cameron \"Herringway\" Ross" "Ilya Yaroshenko"
+copyright "Copyright © 2011-2018, Ferdinand Majerech"
+license "BSL-1.0"
+dependency "tinyendian" version="~>0.2.0"
+dependency "mir-algorithm" version=">=3.10.71"
