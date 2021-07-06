@@ -38,7 +38,7 @@ sources_list = [
     'dyaml/test/representer',
     'dyaml/test/resolver',
     'dyaml/test/tokens',
-    'dyaml/toked',
+    'dyaml/token',
 ]
 
 sources = []
