@@ -47,6 +47,7 @@ jobs:
         dub build --root examples/yaml_bench
         dub build --root examples/yaml_gen
         dub build --root examples/yaml_stats
+        dub build --root testsuite
 
     - name: Codecov
       uses: codecov/codecov-action@v1.5.0

@@ -1,6 +1,7 @@
 # D:YAML - Mir fork
 
-[![travis-ci](https://travis-ci.org/libmir/D-YAML.svg?branch=master)](https://travis-ci.org/libmir/D-YAML)
+![Build Status](https://github.com/libmir/mir-dyaml/actions/workflows/d.yml/badge.svg)
+[![Circle CI](https://circleci.com/gh/libmir/mir-dyaml.svg?style=svg)](https://circleci.com/gh/libmir/mir-dyaml)
 [![codecov](https://codecov.io/gh/libmir/D-YAML/branch/master/graph/badge.svg)](https://codecov.io/gh/libmir/D-YAML)
 [![code.dlang.org](https://img.shields.io/dub/v/mir-dyaml.svg)](http://code.dlang.org/packages/mir-dyaml)
 
