@@ -1,70 +1,119 @@
-project('D-YAML', 'd',
-    meson_version: '>=0.40.0',
-    subproject_dir: 'contrib',
-    version: '0.8.0'
-)
+project('mir-dyaml', 'd', version : '0.0.0', license: 'BSL-1.0')
 
-project_soversion    = '0'
+description = 'YAML parser and emitter for the D programming language.'
 
-src_dir = include_directories('source/')
-pkgc = import('pkgconfig')
+subprojects = ['tinyendian', 'mir-core', 'mir-algorithm']
 
-dyaml_src = [
-    'source/dyaml/composer.d',
-    'source/dyaml/constructor.d',
-    'source/dyaml/dumper.d',
-    'source/dyaml/emitter.d',
-    'source/dyaml/encoding.d',
-    'source/dyaml/escapes.d',
-    'source/dyaml/event.d',
-    'source/dyaml/exception.d',
-    'source/dyaml/linebreak.d',
-    'source/dyaml/loader.d',
-    'source/dyaml/node.d',
-    'source/dyaml/package.d',
-    'source/dyaml/parser.d',
-    'source/dyaml/queue.d',
-    'source/dyaml/reader.d',
-    'source/dyaml/representer.d',
-    'source/dyaml/resolver.d',
-    'source/dyaml/scanner.d',
-    'source/dyaml/serializer.d',
-    'source/dyaml/style.d',
-    'source/dyaml/tagdirective.d',
-    'source/dyaml/test/common.d',
-    'source/dyaml/test/compare.d',
-    'source/dyaml/test/constructor.d',
-    'source/dyaml/test/emitter.d',
-    'source/dyaml/test/errors.d',
-    'source/dyaml/test/inputoutput.d',
-    'source/dyaml/test/reader.d',
-    'source/dyaml/test/representer.d',
-    'source/dyaml/test/resolver.d',
-    'source/dyaml/test/tokens.d',
-    'source/dyaml/token.d'
+has_cpp_headers = false
+
+sources_list = [
+    'mir/ion/conv',
+    'mir/ion/deser/ion',
+    'mir/ion/deser/json',
+    'mir/ion/deser/low_level',
+    'mir/ion/deser/package',
+    'mir/ion/deser/text/package',
+    'mir/ion/deser/text/readers',
+    'mir/ion/deser/text/skippers',
+    'mir/ion/deser/text/tokenizer',
+    'mir/ion/deser/text/tokens',
+    'mir/ion/examples',
+    'mir/ion/exception',
+    'mir/ion/internal/data_holder',
+    'mir/ion/internal/simd',
+    'mir/ion/internal/stage1',
+    'mir/ion/internal/stage2',
+    'mir/ion/internal/stage3',
+    'mir/ion/internal/stage4_s',
+    'mir/ion/ser/ion',
+    'mir/ion/ser/json',
+    'mir/ion/ser/package',
+    'mir/ion/ser/text',
+    'mir/ion/ser/unwrap_ids',
+    'mir/ion/stream',
+    'mir/ion/symbol_table',
+    'mir/ion/tape',
+    'mir/ion/type_code',
+    'mir/ion/value',
 ]
-install_subdir('source/dyaml', install_dir: 'include/d/yaml/')
 
-tinyendian_dep = dependency('tinyendian', version: '>=0.2.0', fallback: ['tinyendian', 'tinyendian_dep'])
+sources = []
+foreach s : sources_list
+    sources += 'source/' + s + '.d'
+endforeach
 
-dyaml_lib = library('dyaml',
-        [dyaml_src],
-        include_directories: [src_dir],
-        dependencies: [tinyendian_dep],
-        install: true,
-        version: meson.project_version(),
-        soversion: project_soversion
-)
-pkgc.generate(name: 'dyaml',
-              libraries: dyaml_lib,
-              subdirs: 'd/yaml/',
-              version: meson.project_version(),
-              description: 'YAML parser and emitter for the D programming language.'
+add_project_arguments([
+    '-preview=dip1008',
+    '-lowmem',
+], language: 'd')
+
+required_deps = []
+
+foreach p : subprojects 
+    if p == 'tinyendian'
+        required_deps += dependency('tinyendian', version: '>=0.2.0', fallback: ['tinyendian', 'tinyendian_dep'])
+    else
+        required_deps += dependency(p, fallback : [p, 'this_dep'])
+    endif
+endforeach
+
+directories = ['source']
+
+if has_cpp_headers
+    directories += 'include'
+endif
+
+directories = include_directories(directories)
+
+this_lib = library(meson.project_name(),
+    sources,
+    include_directories: directories,
+    install: true,
+    version: meson.project_version(),
+    dependencies: required_deps,
 )
 
-# Make D-YAML easy to use as subproject
-dyaml_dep = declare_dependency(
-    link_with: dyaml_lib,
-    include_directories: [src_dir],
-    dependencies: [tinyendian_dep]
+this_dep = declare_dependency(
+    link_with: [this_lib],
+    include_directories: directories,
+    dependencies: required_deps,
 )
+
+test_versions = ['dyaml_test']
+
+if has_cpp_headers
+    install_subdir('include/',
+        strip_directory :true,
+        install_dir: 'include/',
+    )
+endif
+
+install_subdir('source/',
+    strip_directory : true,
+    install_dir: 'include/d/' + meson.project_name(),
+)
+
+import('pkgconfig').generate(this_lib,
+    description: description,
+    subdirs: 'd/' + meson.project_name(),
+)
+
+test_subdirs = []
+
+if get_option('with_test_explicit')
+
+    test_exe = executable(meson.project_name() + '-test',
+        sources,
+        include_directories: directories,
+        d_unittest: true,
+        d_module_versions: test_versions,
+        link_args: '-main',
+        dependencies: required_deps,
+    )
+
+    test(meson.project_name() + '-test', test_exe)
+
+    foreach dir : test_subdirs
+        subdir(dir)
+    endforeach
+endif
