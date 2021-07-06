@@ -135,6 +135,6 @@ You may also run ```dub run``` to combine the compile+run steps.
 ### Conclusion
 
 You should now have a basic idea about how to use D:YAML. To learn more,
-look at the [API documentation](https://dyaml.dpldocs.info/dyaml.html) and other tutorials.
+look at the [API documentation](../) and other tutorials.
 You can find code for this example in the `example/getting_started`
 directory in the package.

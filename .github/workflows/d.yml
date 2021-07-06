@@ -1,0 +1,41 @@
+name: Run all D Tests and Codecov
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  test:
+    name: Dub Tests
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        dc: [ldc-latest, ldc-beta, dmd-latest, dmd-beta]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: D Compiler Installation
+      uses: dlang-community/setup-dlang@v1.1.0
+      with:
+        compiler: ${{ matrix.dc }}
+
+    - name: Run tests with coverage
+      run: | 
+        dub -q test --build=unittest-cov
+        dub build
+        dub run   --root examples/mir_serde
+        dub build --root examples/constructor
+        dub build --root examples/getting_started
+        dub build --root examples/representer
+        dub build --root examples/resolver
+        dub build --root examples/tojson
+        dub build --root examples/yaml_bench
+        dub build --root examples/yaml_gen
+        dub build --root examples/yaml_stats
+        dub build --root testsuite
+    - name: Codecov
+      uses: codecov/codecov-action@v1.5.0
