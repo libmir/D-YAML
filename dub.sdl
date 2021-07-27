@@ -1,6 +1,6 @@
 name "mir-yaml"
 description "YAML parser and emitter with Mir serialisation engine support"
-homepage "https://github.com/dlang-community/D-YAML"
+homepage "https://github.com/libmir/mir-yaml"
 authors "Ferdinand Majerech" "Cameron \"Herringway\" Ross" "Ilya Yaroshenko"
 copyright "Copyright © 2011-2018, Ferdinand Majerech"
 license "BSL-1.0"
