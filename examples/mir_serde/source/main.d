@@ -3,9 +3,9 @@ import dyaml;
 import mir.algebraic_alias.json;
 import mir.format;
 import mir.ion.conv: json2ion;
-import mir.ion.deser.ion: deserializeIon;
-import mir.ion.ser.ion: serializeIon;
-import mir.ion.ser.json: serializeJsonPretty;
+import mir.deser.ion: deserializeIon;
+import mir.ser.ion: serializeIon;
+import mir.ser.json: serializeJsonPretty;
 import mir.serde;
 
 static immutable yaml = `
