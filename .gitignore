@@ -78,3 +78,4 @@ examples/constructor/constructor-test-application
 testsuite/testsuite
 testsuite/testsuite-test-application
 subprojects/*/
+mir-yaml-test-library
