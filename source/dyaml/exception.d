@@ -65,6 +65,12 @@ struct Mark
             return column_;
         }
 
+        /// Duplicate a mark
+        Mark dup () const scope @safe pure nothrow
+        {
+            return Mark(this.name_.idup, this.line_, this.column_);
+        }
+
         /// Get a string representation of the mark.
         string toString() @safe pure nothrow const scope
         {

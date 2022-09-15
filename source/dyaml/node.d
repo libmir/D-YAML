@@ -69,13 +69,13 @@ private struct Pair
         }
 
         /// Equality test with another Pair.
-        bool opEquals(const ref Pair rhs) const @safe
+        bool opEquals(const scope ref Pair rhs) const scope @safe
         {
             return key == rhs.key && value == rhs.value;
         }
 
         // Comparison with another Pair.
-        int opCmp(ref const(Pair) rhs) const @safe
+        int opCmp(const scope ref Pair rhs) const scope @safe
         {
             const keyCmp = key.opCmp(rhs.key);
             return keyCmp != 0 ? keyCmp
@@ -100,17 +100,6 @@ struct Node
     @serdeIgnore:
     public:
         alias Pair = .Pair;
-
-
-
-
-
-
-
-
-
-
-
 
     package:
         // YAML value type.
@@ -408,13 +397,13 @@ struct Node
         }
 
         /// Return tag of the node.
-        @property string tag()      const @safe nothrow
+        @property string tag()      const return scope @safe pure nothrow @nogc
         {
             return tag_;
         }
 
         /// Return the start position of the node.
-        @property Mark startMark()  const @safe pure nothrow
+        @property Mark startMark()  const return scope @safe pure nothrow @nogc
         {
             return startMark_;
         }
@@ -433,11 +422,11 @@ struct Node
          *
          * Returns: true if equal, false otherwise.
          */
-        bool opEquals(const Node rhs) const @safe
+        bool opEquals(const scope Node rhs) const scope @safe
         {
             return opCmp(rhs) == 0;
         }
-        bool opEquals(T)(const auto ref T rhs) const
+        bool opEquals(T)(const scope auto ref T rhs) const @safe
         {
             try
             {
@@ -508,7 +497,7 @@ struct Node
          * Throws:  NodeException if unable to convert to specified type, or if
          *          the value is out of range of requested type.
          */
-        inout(T) get(T, Flag!"stringConversion" stringConversion = Yes.stringConversion)() inout
+        inout(T) get(T, Flag!"stringConversion" stringConversion = Yes.stringConversion)() inout @safe return scope
             if (allowed!(Unqual!T) || hasNodeConstructor!(inout(Unqual!T)) || (!hasIndirections!(Unqual!T) && hasNodeConstructor!(Unqual!T)))
         {
             static if(!allowed!(Unqual!T))
@@ -562,7 +551,7 @@ struct Node
                     static if(!stringConversion)
                     {
                         if (type != NodeType.string)
-                            throw new NodeException(text("Node stores unexpected type: ", type, ". Expected: ", typeid(T)), startMark_);
+                            throw new NodeException(text("Node stores unexpected type: ", type, ". Expected: ", typeid(T).toString), startMark_.dup);
                         return to!T(getValue!string);
                     }
                     else
@@ -574,7 +563,7 @@ struct Node
                         }
                         catch(Exception e)
                         {
-                            throw new NodeException("Unable to convert node value to string", startMark_);
+                            throw new NodeException("Unable to convert node value to string", startMark_.dup);
                         }
                     }
                 }
@@ -594,20 +583,20 @@ struct Node
                         case NodeType.timestamp:
                         case NodeType.mapping:
                         case NodeType.sequence:
-                            throw new NodeException(text("Node stores unexpected type: ", type, ". Expected: ", typeid(T)), startMark_);
+                            throw new NodeException(text("Node stores unexpected type: ", type, ". Expected: ", typeid(T).toString), startMark_.dup);
                     }
                 }
                 else static if(isIntegral!T)
                 {
                     if (type != NodeType.integer)
-                        throw new NodeException(text("Node stores unexpected type: ", type, ". Expected: ", typeid(T)), startMark_);
+                        throw new NodeException(text("Node stores unexpected type: ", type, ". Expected: ", typeid(T).toString), startMark_.dup);
                     immutable temp = getValue!long;
                     if(!(temp >= T.min && temp <= T.max))
-                        throw new NodeException(text("Integer value of type ", typeid(T), " out of range. Value: ", temp), startMark_);
+                        throw new NodeException(text("Integer value of type ", typeid(T).toString, " out of range. Value: ", temp), startMark_.dup);
                     return temp.to!T;
                 }
                 else
-                    throw new NodeException(text("Node stores unexpected type: ", type, ". Expected: ", typeid(T)), startMark_);
+                    throw new NodeException(text("Node stores unexpected type: ", type, ". Expected: ", typeid(T).toString), startMark_.dup);
             }
         }
         /// ditto
@@ -666,10 +655,12 @@ struct Node
                     this.z = z;
                 }
 
-                this(Node node) @safe
+                this(scope const Node node) @safe
                 {
+                    // `std.array.split` is not marked as taking a `scope` range,
+                    // but we don't escape a reference.
                     import std.string: split;
-                    auto parts = node.as!string().split(":");
+                    scope parts = () @trusted { return node.as!string().split(":"); }();
                     x = parts[0].to!int;
                     y = parts[1].to!int;
                     z = parts[2].to!int;
@@ -793,10 +784,10 @@ struct Node
                     this.z = z;
                 }
 
-                this(Node node) @safe inout
+                this(scope const Node node) @safe inout
                 {
                     import std.string: split;
-                    auto parts = node.as!string().split(":");
+                    scope parts = () @trusted { return node.as!string().split(":"); }();
                     x = parts[0].to!int;
                     y = parts[1].to!int;
                     z = parts[2].to!int;
@@ -912,7 +903,7 @@ struct Node
                     return getValue!(Pair[]).length;
                 case NodeID.scalar:
                 case NodeID.invalid:
-                    throw new NodeException(text("Trying to get length of a ", nodeID, " node"), startMark_);
+                    throw new NodeException(text("Trying to get length of a ", nodeID, " node"), startMark_.dup);
             }
         }
         @safe unittest
@@ -944,7 +935,7 @@ struct Node
          *          non-integral index is used with a sequence or the node is
          *          not a collection.
          */
-        ref inout(Node) opIndex(T)(T index) inout @safe
+        ref inout(Node) opIndex(T)(T index) inout return scope @safe
         {
             final switch (nodeID)
             {
@@ -966,10 +957,10 @@ struct Node
                     }
 
                     string msg = "Mapping index not found" ~ (isSomeString!T ? ": " ~ to!string(index) : "");
-                    throw new NodeException(msg, startMark_);
+                    throw new NodeException(msg, startMark_.dup);
                 case NodeID.scalar:
                 case NodeID.invalid:
-                    throw new NodeException(text("Trying to index a ", nodeID, " node"), startMark_);
+                    throw new NodeException(text("Trying to index a ", nodeID, " node"), startMark_.dup);
             }
         }
         ///
@@ -1163,7 +1154,7 @@ struct Node
                     return;
                 case NodeID.scalar:
                 case NodeID.invalid:
-                    throw new NodeException(text("Trying to index a ", nodeID, " node"), startMark_);
+                    throw new NodeException(text("Trying to index a ", nodeID, " node"), startMark_.dup);
             }
         }
         @safe unittest
@@ -1212,7 +1203,7 @@ struct Node
                 import mir.ndslice.slice: sliced;
                 import mir.ndslice.topology: map;
                 if (nodeID != NodeID.sequence)
-                    throw new NodeException(text("Trying to 'sequence'-iterate over a ", nodeID, " node"), startMark_);
+                    throw new NodeException(text("Trying to 'sequence'-iterate over a ", nodeID, " node"), startMark_.dup);
                 static if (is(T == Node))
                     return get!(Node[]).sliced;
                 else
@@ -1247,7 +1238,7 @@ struct Node
             {
                 import mir.ndslice.slice: sliced;
                 if (nodeID != NodeID.mapping)
-                    throw new NodeException(text("Trying to 'mapping'-iterate over a ", nodeID, " node"), startMark_);
+                    throw new NodeException(text("Trying to 'mapping'-iterate over a ", nodeID, " node"), startMark_.dup);
                 return get!(Node.Pair[]).sliced;
             }
         }
@@ -1286,7 +1277,7 @@ struct Node
         {
             import mir.ndslice.topology: map;
             if (nodeID != NodeID.mapping)
-                throw new NodeException(text("Trying to 'mappingKeys'-iterate over a ", nodeID, " node"), startMark_);
+                throw new NodeException(text("Trying to 'mappingKeys'-iterate over a ", nodeID, " node"), startMark_.dup);
             static if (is(Unqual!K == Node))
                 return mapping.map!(pair => pair.key);
             else
@@ -1318,7 +1309,7 @@ struct Node
         {
             import mir.ndslice.topology: map;
             if (nodeID != NodeID.mapping)
-                throw new NodeException(text("Trying to 'mappingValues'-iterate over a ", nodeID, " node"), startMark_);
+                throw new NodeException(text("Trying to 'mappingValues'-iterate over a ", nodeID, " node"), startMark_.dup);
             static if (is(Unqual!V == Node))
                 return mapping.map!(pair => pair.value);
             else
@@ -1350,7 +1341,7 @@ struct Node
         int opApply(D)(D dg) if (isDelegate!D && (Parameters!D.length == 1))
         {
             if (nodeID != NodeID.sequence)
-                throw new NodeException(text("Trying to sequence-foreach over a ", nodeID, " node"), startMark_);
+                throw new NodeException(text("Trying to sequence-foreach over a ", nodeID, " node"), startMark_.dup);
 
             int result;
             foreach(ref node; get!(Node[]))
@@ -1372,7 +1363,7 @@ struct Node
         int opApply(D)(D dg) const if (isDelegate!D && (Parameters!D.length == 1))
         {
             if (nodeID != NodeID.sequence)
-                throw new NodeException(text("Trying to sequence-foreach over a ", nodeID, " node"), startMark_);
+                throw new NodeException(text("Trying to sequence-foreach over a ", nodeID, " node"), startMark_.dup);
 
             int result;
             foreach(ref node; get!(Node[]))
@@ -1462,7 +1453,7 @@ struct Node
             alias K = Parameters!DG[0];
             alias V = Parameters!DG[1];
             if (nodeID != NodeID.mapping)
-                throw new NodeException(text("Trying to mapping-foreach over a ", nodeID, " node"), startMark_);
+                throw new NodeException(text("Trying to mapping-foreach over a ", nodeID, " node"), startMark_.dup);
 
             int result;
             foreach(ref pair; get!(Node.Pair[]))
@@ -1498,7 +1489,7 @@ struct Node
             alias K = Parameters!DG[0];
             alias V = Parameters!DG[1];
             if (nodeID != NodeID.mapping)
-                throw new NodeException(text("Trying to mapping-foreach over a ", nodeID, " node"), startMark_);
+                throw new NodeException(text("Trying to mapping-foreach over a ", nodeID, " node"), startMark_.dup);
 
             int result;
             foreach(ref pair; get!(Node.Pair[]))
@@ -1634,7 +1625,7 @@ struct Node
                 setValue(Node[].init);
             }
             if (nodeID != NodeID.sequence)
-                throw new NodeException(text("Trying to add an element to a ", nodeID, " node"), startMark_);
+                throw new NodeException(text("Trying to add an element to a ", nodeID, " node"), startMark_.dup);
 
             auto nodes = get!(Node[])();
             static if(is(Unqual!T == Node)){nodes ~= value;}
@@ -1685,7 +1676,7 @@ struct Node
                 setValue(Node.Pair[].init);
             }
             if (nodeID != NodeID.mapping)
-                throw new NodeException(text("Trying to add a key-value pair to a ", nodeID, " node"), startMark_);
+                throw new NodeException(text("Trying to add a key-value pair to a ", nodeID, " node"), startMark_.dup);
 
             auto pairs = get!(Node.Pair[])();
             pairs ~= Pair(key, value);
@@ -1731,7 +1722,7 @@ struct Node
             if (op == "in")
         {
             if (nodeID != NodeID.mapping)
-                throw new NodeException(text("Trying to use 'in' on a ", nodeID, " node"), startMark_);
+                throw new NodeException(text("Trying to use 'in' on a ", nodeID, " node"), startMark_.dup);
 
             auto idx = findPair(key);
             if(idx < 0)
@@ -1851,7 +1842,7 @@ struct Node
         }
 
         /// Compare with another _node.
-        int opCmp(const ref Node rhs) const @safe
+        int opCmp(const scope ref Node rhs) const scope @safe
         {
             // Compare tags - if equal or both null, we need to compare further.
             const tagCmp = (tag_ is null) ? (rhs.tag_ is null) ? 0 : -1
@@ -1866,11 +1857,10 @@ struct Node
             }
 
             // Compare validity: if both valid, we have to compare further.
+            if (const typeCmp = cmp(type, rhs.type))
+                return typeCmp;
 
-            const typeCmp = cmp(type, rhs.type);
-            if(typeCmp != 0){return typeCmp;}
-
-            static int compareCollections(T)(const ref Node lhs, const ref Node rhs)
+            static int compareCollections(T)(const scope ref Node lhs, const scope ref Node rhs)
             {
                 const c1 = lhs.getValue!T;
                 const c2 = rhs.getValue!T;
@@ -1969,13 +1959,13 @@ struct Node
         }
 
         /// Get type of the node value.
-        @property NodeType type() const @safe pure nothrow
+        @property NodeType type() const scope @safe pure nothrow @nogc
         {
             return value_.kind;
         }
 
         /// Get the kind of node this is.
-        @property NodeID nodeID() const @safe nothrow
+        @property NodeID nodeID() const scope @safe pure nothrow @nogc
         {
             final switch (type)
             {
@@ -2001,7 +1991,7 @@ struct Node
         // Params:  level = Level of the node in the tree.
         //
         // Returns: String representing the node tree.
-        @property string debugString(uint level = 0) const @safe
+        @property string debugString(uint level = 0) const scope @safe
         {
             string indent;
             foreach(i; 0 .. level){indent ~= " ";}
@@ -2027,7 +2017,7 @@ struct Node
                     }
                     return result;
                 case NodeID.scalar:
-                    return text(indent, "scalar(", (convertsTo!string ? get!string : type.to!string), ")\n");
+                    return (()@trusted => text(indent, "scalar(", (convertsTo!string ? get!string : type.to!string), ")\n"))();
             }
         }
 
@@ -2056,14 +2046,14 @@ struct Node
         void setStyle(CollectionStyle style) @safe
         {
             if (nodeID != NodeID.mapping && nodeID != NodeID.sequence)
-                throw new NodeException("Cannot set collection style for non-collection nodes", startMark_);
+                throw new NodeException("Cannot set collection style for non-collection nodes", startMark_.dup);
             collectionStyle = style;
         }
         /// Ditto
         void setStyle(ScalarStyle style) @safe
         {
             if (nodeID != NodeID.scalar)
-                throw new NodeException("Cannot set scalar style for non-scalar nodes", startMark_);
+                throw new NodeException("Cannot set scalar style for non-scalar nodes", startMark_.dup);
             scalarStyle = style;
         }
         ///
@@ -2180,11 +2170,11 @@ struct Node
                     }
                     else
                     {
-                        throw new NodeException(text("Trying to use ", func, "() on a ", nodeID, " node"), startMark_);
+                        throw new NodeException(text("Trying to use ", func, "() on a ", nodeID, " node"), startMark_.dup);
                     }
                 case NodeID.scalar:
                 case NodeID.invalid:
-                    throw new NodeException(text("Trying to use ", func, "() on a ", nodeID, " node"), startMark_);
+                    throw new NodeException(text("Trying to use ", func, "() on a ", nodeID, " node"), startMark_.dup);
             }
 
         }
@@ -2229,13 +2219,14 @@ struct Node
                     else                                 {assert(false, "Non-integral sequence index");}
                 case NodeID.scalar:
                 case NodeID.invalid:
-                    throw new NodeException(text("Trying to " ~ func ~ "() from a ", nodeID, " node"), startMark_);
+                    throw new NodeException(text("Trying to " ~ func ~ "() from a ", nodeID, " node"), startMark_.dup);
             }
         }
 
         // Get index of pair with key (or value, if key is false) matching index.
         // Cannot be inferred @safe due to https://issues.dlang.org/show_bug.cgi?id=16528
-        sizediff_t findPair(T, Flag!"key" key = Yes.key)(const ref T index) const @safe
+        sizediff_t findPair(T, Flag!"key" key = Yes.key)(const scope ref T index)
+            const scope @safe
         {
             const pairs = getValue!(Pair[])();
             const(Node)* node;
@@ -2262,27 +2253,27 @@ struct Node
         }
 
         // Check if index is integral and in range.
-        void checkSequenceIndex(T)(T index) const
+        void checkSequenceIndex(T)(T index) const scope @safe
         {
             assert(nodeID == NodeID.sequence, "checkSequenceIndex() called on a non-sequence node");
 
             static if(!isIntegral!T)
             {
-                throw new NodeException("Indexing a sequence with a non-integral type.", startMark_);
+                throw new NodeException("Indexing a sequence with a non-integral type.", startMark_.dup);
             }
             else
             {
                 if (!(index >= 0 && index < getValue!(Node[]).length))
-                    throw new NodeException(text("Sequence index out of range: ", index), startMark_);
+                    throw new NodeException(text("Sequence index out of range: ", index), startMark_.dup);
             }
         }
         // Safe wrapper for getting a value out of the variant.
-        inout(T) getValue(T)() @trusted inout
+        inout(T) getValue(T)() @safe return scope inout
         {
             return value_.get!T;
         }
         // Safe wrapper for coercing a value out of the variant.
-        inout(T) coerceValue(T)() @trusted inout
+        inout(T) coerceValue(T)() @trusted scope return inout
         {
             import mir.conv: to;
             return value_.tryVisit!(to!T);
