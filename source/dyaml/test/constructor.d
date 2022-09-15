@@ -826,13 +826,6 @@ Node[] singleDotFloatBug() @safe
     ];
 }
 
-
-
-
-
-
-
-
 Node[] timestampBugs() @safe
 {
     return [

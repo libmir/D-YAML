@@ -82,8 +82,10 @@ struct Loader
 
         /** Construct a Loader to load YAML from a string.
          *
-         * Params:  data = String to load YAML from. The char[] version $(B will)
-         *                 overwrite its input during parsing as D:YAML reuses memory.
+         * Params:
+         *   data = String to load YAML from. The char[] version $(B will)
+         *          overwrite its input during parsing as D:YAML reuses memory.
+         *   filename = The filename to give to the Loader, defaults to `"<unknown>"`
          *
          * Returns: Loader loading YAML from given string.
          *
@@ -91,14 +93,14 @@ struct Loader
          *
          * YAMLException if data could not be read (e.g. a decoding error)
          */
-        static Loader fromString(char[] data) @safe
+        static Loader fromString(char[] data, string filename = "<unknown>") @safe
         {
-            return Loader(cast(ubyte[])data);
+            return Loader(cast(ubyte[])data, filename);
         }
         /// Ditto
-        static Loader fromString(string data) @safe
+        static Loader fromString(string data, string filename = "<unknown>") @safe
         {
-            return fromString(data.dup);
+            return fromString(data.dup, filename);
         }
         /// Load  a char[].
         @safe unittest
@@ -165,6 +167,7 @@ struct Loader
         void name(string name) pure @safe nothrow @nogc
         {
             name_ = name;
+            scanner_.name = name;
         }
 
         /// Specify custom Resolver to use.
@@ -391,4 +394,21 @@ struct Loader
     auto yaml = "{\n\"root\": {\n\t\"key\": \"value\"\n    }\n}";
     auto doc = Loader.fromString(yaml).load();
     assert(doc._is!(Node.Pair[]));
+}
+
+@safe unittest
+{
+    import std.exception : collectException;
+
+    auto yaml = q"EOS
+    value: invalid: string
+EOS";
+    auto filename = "invalid.yml";
+    auto loader = Loader.fromString(yaml);
+    loader.name = filename;
+
+    Node unused;
+    auto e = loader.load().collectException!ScannerException(unused);
+    assert(e.msg == `Mapping values are not allowed here
+file invalid.yml,line 1,column 19`);
 }

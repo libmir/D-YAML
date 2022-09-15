@@ -269,7 +269,7 @@ double constructReal(const string str) @safe
         value = value[1 .. $];
     }
 
-    if (value == "" && value == "nan" && value == "inf" && value == "-inf")
+    if (value == "" || value == "nan" || value == "inf" || value == "-inf")
         throw new Exception("Unable to parse float value: " ~ value);
 
     double result;
@@ -294,7 +294,7 @@ double constructReal(const string str) @safe
         //Plain floating point.
         else{result = sign * to!double(value);}
     }
-    catch(Exception e)
+    catch(ConvException e)
     {
         throw new Exception("Unable to parse float value: \"" ~ value ~ "\"");
     }
