@@ -21,7 +21,7 @@ module dyaml.test.errors;
     */
     static void testLoaderError(string errorFilename) @safe
     {
-        assertThrown(Loader.fromFile(errorFilename).array,
+        assertThrown(Loader.fromFile(errorFilename).loadAll,
             __FUNCTION__ ~ "(" ~ errorFilename ~ ") Expected an exception");
     }
 
@@ -32,7 +32,7 @@ module dyaml.test.errors;
     */
     static void testLoaderErrorString(string errorFilename) @safe
     {
-        assertThrown(Loader.fromFile(errorFilename).array,
+        assertThrown(Loader.fromFile(errorFilename).loadAll,
             __FUNCTION__ ~ "(" ~ errorFilename ~ ") Expected an exception");
     }
 
@@ -43,7 +43,7 @@ module dyaml.test.errors;
     */
     static void testLoaderErrorFilename(string errorFilename) @safe
     {
-        assertThrown(Loader.fromFile(errorFilename).array,
+        assertThrown(Loader.fromFile(errorFilename).loadAll,
             __FUNCTION__ ~ "(" ~ errorFilename ~ ") Expected an exception");
     }
 

@@ -19,7 +19,7 @@ To start using it in your project, see the [Getting Started](docs/tutorials/gett
   - Precise number printing (Ryu) and parsing (required by YAML spec).
   - Support for Arbitrary timestamp precision (required by YAML spec).
   - Support for [Timestamp](http://mir-algorithm.libmir.org/mir_timestamp.html) (Mir), `YearMonthDay` (Mir), `Date` (Mir and Phobos), `DateTime`, `SysTime`.
-  - `Node.mapping` and `Node.sequence` are full featured [Mir slices](http://mir-algorithm.libmir.org/mir_ndslice.html).
+  - `YamlAlgebraic` is full featured [Mir Algebraic](http://mir-core.libmir.org/mir_algebraic.html).
 
 ## Features
   - Easy to use, high level API and detailed debugging messages.

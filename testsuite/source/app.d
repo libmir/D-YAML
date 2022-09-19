@@ -38,16 +38,16 @@ auto dumpEventString(string str) @safe
                     }
                     switch(event.scalarStyle)
                     {
-                        case ScalarStyle.singleQuoted:
+                        case YamlScalarStyle.singleQuoted:
                             line ~= "'";
                             break;
-                        case ScalarStyle.doubleQuoted:
+                        case YamlScalarStyle.doubleQuoted:
                             line ~= '"';
                             break;
-                        case ScalarStyle.literal:
+                        case YamlScalarStyle.literal:
                             line ~= "|";
                             break;
-                        case ScalarStyle.folded:
+                        case YamlScalarStyle.folded:
                             line ~= ">";
                             break;
                         default:
@@ -169,7 +169,7 @@ TestResult runTests(string tml) @safe
     bool loadFailed, shouldFail;
     string failMsg;
     JSONValue json;
-    Node[] nodes;
+    YamlAlgebraic[] nodes;
     string yamlString;
     Nullable!string compareYAMLString;
     Nullable!string events;

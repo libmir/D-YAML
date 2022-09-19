@@ -20,8 +20,8 @@ module dyaml.test.tokens;
     // Read and scan a YAML doc, returning a range of tokens.
     static auto scanTestCommon(string filename) @safe
     {
-        ubyte[] yamlData = cast(ubyte[])readText(filename).dup;
-        return Scanner(new Reader(yamlData));
+        auto yamlData = readText(filename);
+        return Scanner(Reader(yamlData));
     }
 
     /**

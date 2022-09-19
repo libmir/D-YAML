@@ -2,7 +2,7 @@ project('mir-yaml', 'd', version : '0.0.0', license: 'BSL-1.0')
 
 description = 'YAML parser and emitter for the D programming language.'
 
-subprojects = ['tinyendian', 'mir-core', 'mir-algorithm']
+subprojects = ['mir-core', 'mir-algorithm']
 
 has_cpp_headers = false
 
@@ -11,13 +11,11 @@ sources_list = [
     'dyaml/constructor',
     'dyaml/dumper',
     'dyaml/emitter',
-    'dyaml/encoding',
     'dyaml/escapes',
     'dyaml/event',
     'dyaml/exception',
     'dyaml/linebreak',
     'dyaml/loader',
-    'dyaml/node',
     'dyaml/package',
     'dyaml/parser',
     'dyaml/queue',
@@ -26,7 +24,6 @@ sources_list = [
     'dyaml/resolver',
     'dyaml/scanner',
     'dyaml/serializer',
-    'dyaml/style',
     'dyaml/tagdirective',
     'dyaml/test/common',
     'dyaml/test/compare',
@@ -54,11 +51,7 @@ add_project_arguments([
 required_deps = []
 
 foreach p : subprojects 
-    if p == 'tinyendian'
-        required_deps += dependency('tinyendian', version: '>=0.2.0', fallback: ['tinyendian', 'tinyendian_dep'])
-    else
-        required_deps += dependency(p, fallback : [p, 'this_dep'])
-    endif
+    required_deps += dependency(p, fallback : [p, 'this_dep'])
 endforeach
 
 directories = ['source']

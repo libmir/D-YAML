@@ -4,5 +4,8 @@ homepage "https://github.com/libmir/mir-yaml"
 authors "Ferdinand Majerech" "Cameron \"Herringway\" Ross" "Ilya Yaroshenko"
 copyright "Copyright © 2011-2018, Ferdinand Majerech"
 license "BSL-1.0"
-dependency "tinyendian" version="~>0.2.0"
 dependency "mir-algorithm" version=">=3.10.71"
+dflags "-preview=dip1000"
+
+dflags "-fsanitize=address" "-link-defaultlib-debug" platform="posix-ldc" # use LDC AddressSanitizer
+lflags "--export-dynamic" platform="linux-ldc" # for ASan backtraces

@@ -29,8 +29,8 @@ struct Color
 ```
 
 First, we need our type to have an appropriate constructor. The constructor
-will take a const *Node* to construct from. The node is guaranteed to
-contain either a *string*, an array of *Node* or of *Node.Pair*,
+will take a const *YamlAlgebraic* to construct from. The node is guaranteed to
+contain either a *string*, an array of *YamlAlgebraic* or of *YamlPair*,
 depending on whether we're constructing our value from a scalar,
 sequence, or mapping, respectively.
 
@@ -40,18 +40,18 @@ following format: {r:RRR, g:GGG, b:BBB} . Code of these functions:
 
 ```D
 
-this(const Node node, string tag) @safe
+this(const YamlAlgebraic node, string tag) @safe
 {
      if (tag == "!color-mapping")
      {
          //Will throw if a value is missing, is not an integer, or is out of range.
-         red = node["r"].as!ubyte;
-         green = node["g"].as!ubyte;
-         blue = node["b"].as!ubyte;
+         red = node.get!"object"["r"].as!ubyte;
+         green = node.get!"object"["g"].as!ubyte;
+         blue = node.get!"object"["b"].as!ubyte;
      }
      else
      {
-         string value = node.as!string;
+         string value = node.get!string;
 
          if(value.length != 6)
          {
@@ -121,7 +121,7 @@ void main()
             return;
         }
     }
-    catch(YAMLException e)
+    catch(YamlException e)
     {
         writeln(e.msg);
     }
@@ -130,7 +130,7 @@ void main()
 }
 ```
 
-First we load the YAML document, and then have the resulting *Node*s converted
+First we load the YAML document, and then have the resulting *YamlAlgebraic*s converted
 to Colors via their constructor.
 
 You can find the source code for what we've done so far in the
@@ -162,8 +162,6 @@ resolver.addImplicitResolver("!color", regex("[0-9a-fA-F]{6}"),
                              "0123456789abcdefABCDEF");
 
 auto loader = Loader.fromFile("input.yaml");
-
-loader.resolver = resolver;
 ```
 
 Now, change contents of `input.yaml` to this:
@@ -191,20 +189,20 @@ the D:YAML package.
 Now that you can load custom data types, it might be good to know how to
 dump them.
 
-The *Node* struct simply attempts to cast all unrecognized types to *Node*.
+The *YamlAlgebraic* struct simply attempts to cast all unrecognized types to *YamlAlgebraic*.
 This gives each type a consistent and simple way of being represented in a
-document. All we need to do is specify a `Node opCast(T: Node)()` method for
+document. All we need to do is specify a `YamlAlgebraic opCast(T: YamlAlgebraic)()` method for
 any types we wish to support. It is also possible to specify specific styles
 for each representation.
 
-Each type may only have one opCast!Node. Default YAML types are already
+Each type may only have one opCast!YamlAlgebraic. Default YAML types are already
 supported.
 
 With the following code, we will add support for dumping the our Color
 type.
 
 ```D
-Node opCast(T: Node)() const
+YamlAlgebraic opCast(T: YamlAlgebraic)() const
 {
     static immutable hex = "0123456789ABCDEF";
 
@@ -217,14 +215,14 @@ Node opCast(T: Node)() const
     }
 
     //Representing as a scalar, with custom tag to specify this data type.
-    return Node(scalar, "!color");
+    return YamlAlgebraic(scalar, "!color");
 }
 ```
 
 First we convert the colour data to a string with the CSS-like format we've
-used before. Then, we create a scalar *Node* with our desired tag.
+used before. Then, we create a scalar *YamlAlgebraic* with our desired tag.
 
-Since a type can only have one opCast!Node method, we don't dump
+Since a type can only have one opCast!YamlAlgebraic method, we don't dump
 *Color* both in the scalar and mapping formats we've used before.
 However, you can decide to dump the node with different formats/tags in
 the method itself. E.g. you could dump the Color as a
@@ -238,13 +236,13 @@ void main()
     {
         auto dumper = dumper(File("output.yaml", "w").lockingTextWriter);
 
-        auto document = Node([Color(255, 0, 0),
+        auto document = YamlAlgebraic([Color(255, 0, 0),
                               Color(0, 255, 0),
                               Color(0, 0, 255)]);
 
         dumper.dump(document);
     }
-    catch(YAMLException e)
+    catch(YamlException e)
     {
         writeln(e.msg);
     }

@@ -102,5 +102,5 @@ uint escapeHexLength(dchar hexCode) @safe pure nothrow @nogc
 }`;
 
     auto node = Loader.fromString(str).load();
-    assert(node["forward/slashes"] == "can/be/optionally/escaped");
+    assert(node.get!"object"["forward/slashes"] == "can/be/optionally/escaped");
 }

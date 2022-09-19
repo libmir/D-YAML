@@ -22,7 +22,7 @@ import std.typecons;
 import dyaml.constructor;
 import dyaml.event;
 import dyaml.exception;
-import dyaml.node;
+import mir.algebraic_alias.yaml;
 import dyaml.parser;
 import dyaml.resolver;
 
@@ -31,9 +31,9 @@ package:
 /**
  * Exception thrown at composer errors.
  *
- * See_Also: MarkedYAMLException
+ * See_Also: MarkedYamlException
  */
-class ComposerException : MarkedYAMLException
+class ComposerException : MarkedYamlException
 {
     mixin MarkedExceptionCtors;
 }
@@ -43,24 +43,24 @@ struct Composer
 {
     private:
         ///Parser providing YAML events.
-        Parser parser_;
+        package Parser parser_;
         ///Resolver resolving tags (data types).
         Resolver resolver_;
         ///Nodes associated with anchors. Used by YAML aliases.
-        Node[string] anchors_;
+        YamlAlgebraic[string] anchors_;
 
         ///Used to reduce allocations when creating pair arrays.
         ///
         ///We need one appender for each nesting level that involves
         ///a pair array, as the inner levels are processed as a
         ///part of the outer levels. Used as a stack.
-        Appender!(Node.Pair[])[] pairAppenders_;
+        Appender!(YamlPair[])[] pairAppenders_;
         ///Used to reduce allocations when creating node arrays.
         ///
         ///We need one appender for each nesting level that involves
         ///a node array, as the inner levels are processed as a
         ///part of the outer levels. Used as a stack.
-        Appender!(Node[])[] nodeAppenders_;
+        Appender!(YamlAlgebraic[])[] nodeAppenders_;
 
     public:
         /**
@@ -71,7 +71,8 @@ struct Composer
          */
         this(Parser parser, Resolver resolver) @safe
         {
-            parser_ = parser;
+            import core.lifetime;
+            parser_ = move(parser);
             resolver_ = resolver;
         }
 
@@ -90,7 +91,7 @@ struct Composer
         }
 
         ///Get a YAML document as a node (the root of the document).
-        Node getNode() @safe
+        YamlAlgebraic getNode() @safe
         {
             //Get the root node of the next document.
             assert(parser_.front.id != EventID.streamEnd,
@@ -116,25 +117,25 @@ struct Composer
         {
             while(pairAppenders_.length <= pairAppenderLevel)
             {
-                pairAppenders_ ~= appender!(Node.Pair[])();
+                pairAppenders_ ~= appender!(YamlPair[])();
             }
             while(nodeAppenders_.length <= nodeAppenderLevel)
             {
-                nodeAppenders_ ~= appender!(Node[])();
+                nodeAppenders_ ~= appender!(YamlAlgebraic[])();
             }
         }
 
         ///Compose a YAML document and return its root node.
-        Node composeDocument() @safe
+        YamlAlgebraic composeDocument() @safe
         {
             skipExpected(EventID.documentStart);
 
             //Compose the root node.
-            Node node = composeNode(0, 0);
+            YamlAlgebraic node = composeNode(0, 0);
 
             skipExpected(EventID.documentEnd);
 
-            anchors_.destroy();
+            anchors_ = null;
             return node;
         }
 
@@ -142,7 +143,7 @@ struct Composer
         ///
         /// Params: pairAppenderLevel = Current level of the pair appender stack.
         ///         nodeAppenderLevel = Current level of the node appender stack.
-        Node composeNode(const uint pairAppenderLevel, const uint nodeAppenderLevel) @safe
+        YamlAlgebraic composeNode(const uint pairAppenderLevel, const uint nodeAppenderLevel) @safe
         {
             if(parser_.front.id == EventID.alias_)
             {
@@ -156,7 +157,7 @@ struct Composer
                 //If the node referenced by the anchor is uninitialized,
                 //it's not finished, i.e. we're currently composing it
                 //and trying to use it recursively here.
-                enforce(anchors_[anchor] != Node(),
+                enforce(anchors_[anchor] != YamlAlgebraic(),
                         new ComposerException("Found recursive alias: " ~ anchor,
                                               event.startMark));
 
@@ -171,12 +172,12 @@ struct Composer
                                             event.startMark);
             }
 
-            Node result;
+            YamlAlgebraic result;
             //Associate the anchor, if any, with an uninitialized node.
             //used to detect duplicate and recursive anchors.
             if(anchor !is null)
             {
-                anchors_[anchor] = Node();
+                anchors_[anchor] = YamlAlgebraic();
             }
 
             switch (parser_.front.id)
@@ -201,14 +202,14 @@ struct Composer
         }
 
         ///Compose a scalar node.
-        Node composeScalarNode() @safe
+        YamlAlgebraic composeScalarNode() @safe
         {
             const event = parser_.front;
             parser_.popFront();
-            const tag = resolver_.resolve(NodeID.scalar, event.tag, event.value,
+            const tag = resolver_.resolve(YamlAlgebraic.Kind.string, event.tag, event.value,
                                           event.implicit);
 
-            Node node = constructNode(event.startMark, event.endMark, tag,
+            YamlAlgebraic node = constructNode(event.startMark, event.endMark, tag,
                                           event.value);
             node.scalarStyle = event.scalarStyle;
 
@@ -219,7 +220,7 @@ struct Composer
         ///
         /// Params: pairAppenderLevel = Current level of the pair appender stack.
         ///         nodeAppenderLevel = Current level of the node appender stack.
-        Node composeSequenceNode(const uint pairAppenderLevel, const uint nodeAppenderLevel)
+        YamlAlgebraic composeSequenceNode(const uint pairAppenderLevel, const uint nodeAppenderLevel)
             @safe
         {
             ensureAppendersExist(pairAppenderLevel, nodeAppenderLevel);
@@ -227,7 +228,7 @@ struct Composer
 
             const startEvent = parser_.front;
             parser_.popFront();
-            const tag = resolver_.resolve(NodeID.sequence, startEvent.tag, null,
+            const tag = resolver_.resolve(YamlAlgebraic.Kind.array, startEvent.tag, null,
                                           startEvent.implicit);
 
             while(parser_.front.id != EventID.sequenceEnd)
@@ -235,7 +236,7 @@ struct Composer
                 nodeAppender.put(composeNode(pairAppenderLevel, nodeAppenderLevel + 1));
             }
 
-            Node node = constructNode(startEvent.startMark, parser_.front.endMark,
+            YamlAlgebraic node = constructNode(startEvent.startMark, parser_.front.endMark,
                                           tag, nodeAppender.data.dup);
             node.collectionStyle = startEvent.collectionStyle;
             parser_.popFront();
@@ -247,9 +248,9 @@ struct Composer
         /**
          * Flatten a node, merging it with nodes referenced through YAMLMerge data type.
          *
-         * Node must be a mapping or a sequence of mappings.
+         * YamlAlgebraic must be a mapping or a sequence of mappings.
          *
-         * Params:  root              = Node to flatten.
+         * Params:  root              = YamlAlgebraic to flatten.
          *          startMark         = Start position of the node.
          *          endMark           = End position of the node.
          *          pairAppenderLevel = Current level of the pair appender stack.
@@ -257,16 +258,16 @@ struct Composer
          *
          * Returns: Flattened mapping as pairs.
          */
-        Node.Pair[] flatten(ref Node root, const Mark startMark, const Mark endMark,
+        YamlPair[] flatten(ref YamlAlgebraic root, const ParsePosition startMark, const ParsePosition endMark,
                             const uint pairAppenderLevel, const uint nodeAppenderLevel) @safe
         {
-            void error(Node node)
+            void error(YamlAlgebraic node)
             {
                 //this is Composer, but the code is related to Constructor.
                 throw new ConstructorException("While constructing a mapping, " ~
                                                "expected a mapping or a list of " ~
                                                "mappings for merging, but found: " ~
-                                               text(node.type) ~
+                                               text(node.kind) ~
                                                " NOTE: line/column shows topmost parent " ~
                                                "to which the content is being merged",
                                                startMark, endMark);
@@ -275,20 +276,20 @@ struct Composer
             ensureAppendersExist(pairAppenderLevel, nodeAppenderLevel);
             auto pairAppender = &(pairAppenders_[pairAppenderLevel]);
 
-            final switch (root.nodeID)
+            switch (root.kind)
             {
-                case NodeID.mapping:
-                    Node[] toMerge;
-                    toMerge.reserve(root.length);
-                    foreach (ref Node key, ref Node value; root)
+                case YamlAlgebraic.Kind.object:
+                    YamlAlgebraic[] toMerge;
+                    toMerge.reserve(root.get!"object".length);
+                    foreach (ref pair; root.get!"object".pairs) with(pair)
                     {
-                        if(key.type == NodeType.merge)
+                        if(key == "<<")
                         {
                             toMerge ~= value;
                         }
                         else
                         {
-                            auto temp = Node.Pair(key, value);
+                            auto temp = YamlPair(key, value);
                             pairAppender.put(temp);
                         }
                     }
@@ -298,10 +299,10 @@ struct Composer
                                                      pairAppenderLevel + 1, nodeAppenderLevel));
                     }
                     break;
-                case NodeID.sequence:
-                    foreach (ref Node node; root)
+                case YamlAlgebraic.Kind.array:
+                    foreach (ref YamlAlgebraic node; root.get!"array")
                     {
-                        if (node.nodeID != NodeID.mapping)
+                        if (node.kind != YamlAlgebraic.Kind.object)
                         {
                             error(node);
                         }
@@ -309,8 +310,7 @@ struct Composer
                                                      pairAppenderLevel + 1, nodeAppenderLevel));
                     }
                     break;
-                case NodeID.scalar:
-                case NodeID.invalid:
+                default:
                     error(root);
                     break;
             }
@@ -325,26 +325,26 @@ struct Composer
         ///
         /// Params: pairAppenderLevel = Current level of the pair appender stack.
         ///         nodeAppenderLevel = Current level of the node appender stack.
-        Node composeMappingNode(const uint pairAppenderLevel, const uint nodeAppenderLevel)
+        YamlAlgebraic composeMappingNode(const uint pairAppenderLevel, const uint nodeAppenderLevel)
             @safe
         {
             ensureAppendersExist(pairAppenderLevel, nodeAppenderLevel);
             const startEvent = parser_.front;
             parser_.popFront();
-            const tag = resolver_.resolve(NodeID.mapping, startEvent.tag, null,
+            const tag = resolver_.resolve(YamlAlgebraic.Kind.object, startEvent.tag, null,
                                           startEvent.implicit);
             auto pairAppender = &(pairAppenders_[pairAppenderLevel]);
 
-            Tuple!(Node, Mark)[] toMerge;
+            Tuple!(YamlAlgebraic, ParsePosition)[] toMerge;
             while(parser_.front.id != EventID.mappingEnd)
             {
-                auto pair = Node.Pair(composeNode(pairAppenderLevel + 1, nodeAppenderLevel),
+                auto pair = YamlPair(composeNode(pairAppenderLevel + 1, nodeAppenderLevel),
                                       composeNode(pairAppenderLevel + 1, nodeAppenderLevel));
 
-                //Need to flatten and merge the node referred by YAMLMerge.
-                if(pair.key.type == NodeType.merge)
+                // Need to flatten and merge the node referred by YAMLMerge.
+                if(pair.key == "<<")
                 {
-                    toMerge ~= tuple(pair.value, cast(Mark)parser_.front.endMark);
+                    toMerge ~= tuple(pair.value, cast(ParsePosition)parser_.front.endMark);
                 }
                 //Not YAMLMerge, just add the pair.
                 else
@@ -363,15 +363,15 @@ struct Composer
                 foreach (index, const ref value; sorted[0 .. $ - 1].enumerate)
                     if (value.key == sorted[index + 1].key) {
                         const message = () @trusted {
-                            import std.format: format;
-                            return format("Key '%s' appears multiple times in mapping (first: %s)",
-                                          value.key.get!string, value.key.startMark);
+                            import mir.format: text;
+                            import mir.algebraic: visit;
+                            return text("Key '", value.key.visit!text, "' appears multiple times in mapping (first: ", value.key.startMark, ")");
                         }();
                         throw new ComposerException(message, sorted[index + 1].key.startMark);
                     }
             }
 
-            Node node = constructNode(startEvent.startMark, parser_.front.endMark,
+            YamlAlgebraic node = constructNode(startEvent.startMark, parser_.front.endMark,
                                           tag, pairAppender.data.dup);
             node.collectionStyle = startEvent.collectionStyle;
             parser_.popFront();
@@ -392,10 +392,27 @@ struct Composer
     "comment": "To write down comments pre-JSON5"
 }`;
 
+    import mir.test: should;
+
     try
         auto node = Loader.fromString(str).load();
     catch (ComposerException exc)
-        assert((()@trusted => exc.message())() ==
+        (()@trusted => exc.message())().should ==
                "Key 'comment' appears multiple times in mapping " ~
-               "(first: file <unknown>,line 2,column 5)\nfile <unknown>,line 4,column 5");
+               "(first: <unknown>(2,5))\n<unknown>(4,5)";
+}
+package:
+// Merge pairs into an array of pairs based on merge rules in the YAML spec.
+//
+// Any new pair will only be added if there is not already a pair
+// with the same key.
+//
+// Params:  pairs   = Appender managing the array of pairs to merge into.
+//          toMerge = Pairs to merge.
+void merge(ref Appender!(YamlPair[]) pairs, YamlPair[] toMerge) @safe
+{
+    foreach(ref pair; toMerge) if(!canFind!"a.key == b.key"(pairs.data, pair))
+    {
+        pairs.put(pair);
+    }
 }

@@ -16,10 +16,11 @@ import std.exception;
 import std.path;
 import std.string;
 
-import dyaml : Loader, Node, YAMLNull;
+import dyaml : Loader, YamlAlgebraic, YamlPair;
+import dyaml.representer: withTag;
 
 ///Expected results of loading test inputs.
-Node[][string] expected;
+YamlAlgebraic[][string] expected;
 
 ///Initialize expected.
 static this() @safe
@@ -55,585 +56,546 @@ static this() @safe
     expected["utf8-implicit"] = utf8implicit();
 }
 
-///Construct a pair of nodes with specified values.
-Node.Pair pair(A, B)(A a, B b)
-{
-    return Node.Pair(a,b);
-}
-
 ///Test cases:
 
-Node[] constructAliasesCDumperBug() @safe
+YamlAlgebraic[] constructAliasesCDumperBug() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                Node("today", "tag:yaml.org,2002:str"),
-                Node("today", "tag:yaml.org,2002:str")
-            ],
-        "tag:yaml.org,2002:seq")
+                YamlAlgebraic("today").withTag("tag:yaml.org,2002:str"),
+                YamlAlgebraic("today").withTag("tag:yaml.org,2002:str")
+            ].dup).withTag("tag:yaml.org,2002:seq")
     ];
 }
 
-Node[] constructBinary() @safe
+YamlAlgebraic[] constructBinary() @safe
 {
     auto canonical = "GIF89a\x0c\x00\x0c\x00\x84\x00\x00\xff\xff\xf7\xf5\xf5\xee\xe9\xe9\xe5fff\x00\x00\x00\xe7\xe7\xe7^^^\xf3\xf3\xed\x8e\x8e\x8e\xe0\xe0\xe0\x9f\x9f\x9f\x93\x93\x93\xa7\xa7\xa7\x9e\x9e\x9eiiiccc\xa3\xa3\xa3\x84\x84\x84\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9!\xfe\x0eMade with GIMP\x00,\x00\x00\x00\x00\x0c\x00\x0c\x00\x00\x05,  \x8e\x810\x9e\xe3@\x14\xe8i\x10\xc4\xd1\x8a\x08\x1c\xcf\x80M$z\xef\xff0\x85p\xb8\xb01f\r\x1b\xce\x01\xc3\x01\x1e\x10' \x82\n\x01\x00;".representation.dup;
     auto generic = "GIF89a\x0c\x00\x0c\x00\x84\x00\x00\xff\xff\xf7\xf5\xf5\xee\xe9\xe9\xe5fff\x00\x00\x00\xe7\xe7\xe7^^^\xf3\xf3\xed\x8e\x8e\x8e\xe0\xe0\xe0\x9f\x9f\x9f\x93\x93\x93\xa7\xa7\xa7\x9e\x9e\x9eiiiccc\xa3\xa3\xa3\x84\x84\x84\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9\xff\xfe\xf9!\xfe\x0eMade with GIMP\x00,\x00\x00\x00\x00\x0c\x00\x0c\x00\x00\x05,  \x8e\x810\x9e\xe3@\x14\xe8i\x10\xc4\xd1\x8a\x08\x1c\xcf\x80M$z\xef\xff0\x85p\xb8\xb01f\r\x1b\xce\x01\xc3\x01\x1e\x10' \x82\n\x01\x00;".representation.dup;
     auto description = "The binary value above is a tiny arrow encoded as a gif image.";
 
     return [
-        Node(
+        YamlAlgebraic(
             [
-                pair(
-                    Node("canonical", "tag:yaml.org,2002:str"),
-                    Node(canonical, "tag:yaml.org,2002:binary")
+                YamlPair(
+                    YamlAlgebraic("canonical").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(canonical).withTag("tag:yaml.org,2002:binary")
                 ),
-                pair(
-                    Node("generic", "tag:yaml.org,2002:str"),
-                    Node(generic, "tag:yaml.org,2002:binary")
+                YamlPair(
+                    YamlAlgebraic("generic").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(generic).withTag("tag:yaml.org,2002:binary")
                 ),
-                pair(
-                    Node("description", "tag:yaml.org,2002:str"),
-                    Node(description, "tag:yaml.org,2002:str")
+                YamlPair(
+                    YamlAlgebraic("description").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(description).withTag("tag:yaml.org,2002:str")
                 )
-            ],
-        "tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:map")
     ];
 }
 
-Node[] constructBool() @safe
+YamlAlgebraic[] constructBool() @safe
 {
     const(bool) a = true;
     immutable(bool) b = true;
     const bool aa = true;
     immutable bool bb = true;
     return [
-        Node(
+        YamlAlgebraic(
             [
-                pair(
-                    Node("canonical", "tag:yaml.org,2002:str"),
-                    Node(true, "tag:yaml.org,2002:bool")
+                YamlPair(
+                    YamlAlgebraic("canonical").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(true).withTag("tag:yaml.org,2002:bool")
                 ),
-                pair(
-                    Node("answer", "tag:yaml.org,2002:str"),
-                    Node(false, "tag:yaml.org,2002:bool")
+                YamlPair(
+                    YamlAlgebraic("answer").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(false).withTag("tag:yaml.org,2002:bool")
                 ),
-                pair(
-                    Node("logical", "tag:yaml.org,2002:str"),
-                    Node(true, "tag:yaml.org,2002:bool")
+                YamlPair(
+                    YamlAlgebraic("logical").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(true).withTag("tag:yaml.org,2002:bool")
                 ),
-                pair(
-                    Node("option", "tag:yaml.org,2002:str"),
-                    Node(true, "tag:yaml.org,2002:bool")
+                YamlPair(
+                    YamlAlgebraic("option").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(true).withTag("tag:yaml.org,2002:bool")
                 ),
-                pair(
-                    Node("constbool", "tag:yaml.org,2002:str"),
-                    Node(a, "tag:yaml.org,2002:bool")
+                YamlPair(
+                    YamlAlgebraic("constbool").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(a).withTag("tag:yaml.org,2002:bool")
                 ),
-                pair(
-                    Node("imutbool", "tag:yaml.org,2002:str"),
-                    Node(b, "tag:yaml.org,2002:bool")
+                YamlPair(
+                    YamlAlgebraic("imutbool").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(b).withTag("tag:yaml.org,2002:bool")
                 ),
-                pair(
-                    Node("const_bool", "tag:yaml.org,2002:str"),
-                    Node(aa, "tag:yaml.org,2002:bool")
+                YamlPair(
+                    YamlAlgebraic("const_bool").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(aa).withTag("tag:yaml.org,2002:bool")
                 ),
-                pair(
-                    Node("imut_bool", "tag:yaml.org,2002:str"),
-                    Node(bb, "tag:yaml.org,2002:bool")
+                YamlPair(
+                    YamlAlgebraic("imut_bool").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(bb).withTag("tag:yaml.org,2002:bool")
                 ),
-                pair(
-                    Node("but", "tag:yaml.org,2002:str"),
-                    Node(
+                YamlPair(
+                    YamlAlgebraic("but").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(
                             [
-                            pair(
-                                Node("y", "tag:yaml.org,2002:str"),
-                                Node("is a string", "tag:yaml.org,2002:str")
+                            YamlPair(
+                                YamlAlgebraic("y").withTag("tag:yaml.org,2002:str"),
+                                YamlAlgebraic("is a string").withTag("tag:yaml.org,2002:str")
                             ),
-                            pair(
-                                Node("n", "tag:yaml.org,2002:str"),
-                                Node("is a string", "tag:yaml.org,2002:str")
+                            YamlPair(
+                                YamlAlgebraic("n").withTag("tag:yaml.org,2002:str"),
+                                YamlAlgebraic("is a string").withTag("tag:yaml.org,2002:str")
                             )
-                        ],
-                    "tag:yaml.org,2002:map")
+                        ].dup).withTag("tag:yaml.org,2002:map")
                 )
-            ],
-        "tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:map")
     ];
 }
 
-Node[] constructCustom() @safe
+YamlAlgebraic[] constructCustom() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                Node(new TestClass(1, 2, 3)),
-                Node(TestStruct(10))
-            ],
-        "tag:yaml.org,2002:seq")
+                cast(YamlAlgebraic)new TestClass(1, 2, 3),
+                cast(YamlAlgebraic)TestStruct(10)
+            ].dup).withTag("tag:yaml.org,2002:seq")
     ];
 }
 
-Node[] constructFloat() @safe
+YamlAlgebraic[] constructFloat() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                pair(
-                    Node("canonical", "tag:yaml.org,2002:str"),
-                    Node(685230.15L, "tag:yaml.org,2002:float")
+                YamlPair(
+                    YamlAlgebraic("canonical").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(685230.15L).withTag("tag:yaml.org,2002:float")
                 ),
-                pair(
-                    Node("exponential", "tag:yaml.org,2002:str"),
-                    Node(685230.15L, "tag:yaml.org,2002:float")
+                YamlPair(
+                    YamlAlgebraic("exponential").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(685230.15L).withTag("tag:yaml.org,2002:float")
                 ),
-                pair(
-                    Node("fixed", "tag:yaml.org,2002:str"),
-                    Node(685230.15L, "tag:yaml.org,2002:float")
+                YamlPair(
+                    YamlAlgebraic("fixed").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(685230.15L).withTag("tag:yaml.org,2002:float")
                 ),
-                pair(
-                    Node("sexagesimal", "tag:yaml.org,2002:str"),
-                    Node(685230.15L, "tag:yaml.org,2002:float")
+                YamlPair(
+                    YamlAlgebraic("sexagesimal").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(685230.15L).withTag("tag:yaml.org,2002:float")
                 ),
-                pair(
-                    Node("negative infinity", "tag:yaml.org,2002:str"),
-                    Node(-double.infinity, "tag:yaml.org,2002:float")
+                YamlPair(
+                    YamlAlgebraic("negative infinity").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(-double.infinity).withTag("tag:yaml.org,2002:float")
                 ),
-                pair(
-                    Node("not a number", "tag:yaml.org,2002:str"),
-                    Node(double.nan, "tag:yaml.org,2002:float")
+                YamlPair(
+                    YamlAlgebraic("not a number").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(double.nan).withTag("tag:yaml.org,2002:float")
                 )
-            ],
-        "tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:map")
     ];
 }
 
-Node[] constructInt() @safe
+YamlAlgebraic[] constructInt() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                pair(
-                    Node("canonical", "tag:yaml.org,2002:str"),
-                    Node(685230L, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic("canonical").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(685230L).withTag("tag:yaml.org,2002:int")
                 ),
-                pair(
-                    Node("decimal", "tag:yaml.org,2002:str"),
-                    Node(685230L, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic("decimal").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(685230L).withTag("tag:yaml.org,2002:int")
                 ),
-                pair(
-                    Node("octal", "tag:yaml.org,2002:str"),
-                    Node(685230L, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic("octal").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(685230L).withTag("tag:yaml.org,2002:int")
                 ),
-                pair(
-                    Node("hexadecimal", "tag:yaml.org,2002:str"),
-                    Node(685230L, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic("hexadecimal").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(685230L).withTag("tag:yaml.org,2002:int")
                 ),
-                pair(
-                    Node("binary", "tag:yaml.org,2002:str"),
-                    Node(685230L, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic("binary").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(685230L).withTag("tag:yaml.org,2002:int")
                 ),
-                pair(
-                    Node("sexagesimal", "tag:yaml.org,2002:str"),
-                    Node(685230L, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic("sexagesimal").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(685230L).withTag("tag:yaml.org,2002:int")
                 )
-            ],
-        "tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:map")
     ];
 }
 
-Node[] constructMap() @safe
+YamlAlgebraic[] constructMap() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                pair(
-                    Node("Block style", "tag:yaml.org,2002:str"),
-                    Node(
+                YamlPair(
+                    YamlAlgebraic("Block style").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(
                         [
-                            pair(
-                                Node("Clark", "tag:yaml.org,2002:str"),
-                                Node("Evans", "tag:yaml.org,2002:str")
+                            YamlPair(
+                                YamlAlgebraic("Clark").withTag("tag:yaml.org,2002:str"),
+                                YamlAlgebraic("Evans").withTag("tag:yaml.org,2002:str")
                             ),
-                            pair(
-                                Node("Brian", "tag:yaml.org,2002:str"),
-                                Node("Ingerson", "tag:yaml.org,2002:str")
+                            YamlPair(
+                                YamlAlgebraic("Brian").withTag("tag:yaml.org,2002:str"),
+                                YamlAlgebraic("Ingerson").withTag("tag:yaml.org,2002:str")
                             ),
-                            pair(
-                                Node("Oren", "tag:yaml.org,2002:str"),
-                                Node("Ben-Kiki", "tag:yaml.org,2002:str")
+                            YamlPair(
+                                YamlAlgebraic("Oren").withTag("tag:yaml.org,2002:str"),
+                                YamlAlgebraic("Ben-Kiki").withTag("tag:yaml.org,2002:str")
                             )
-                        ],
-                    "tag:yaml.org,2002:map")
+                        ].dup).withTag("tag:yaml.org,2002:map")
                 ),
-                pair(
-                    Node("Flow style", "tag:yaml.org,2002:str"),
-                    Node(
+                YamlPair(
+                    YamlAlgebraic("Flow style").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(
                         [
-                            pair(
-                                Node("Clark", "tag:yaml.org,2002:str"),
-                                Node("Evans", "tag:yaml.org,2002:str")
+                            YamlPair(
+                                YamlAlgebraic("Clark").withTag("tag:yaml.org,2002:str"),
+                                YamlAlgebraic("Evans").withTag("tag:yaml.org,2002:str")
                             ),
-                            pair(
-                                Node("Brian", "tag:yaml.org,2002:str"),
-                                Node("Ingerson", "tag:yaml.org,2002:str")
+                            YamlPair(
+                                YamlAlgebraic("Brian").withTag("tag:yaml.org,2002:str"),
+                                YamlAlgebraic("Ingerson").withTag("tag:yaml.org,2002:str")
                             ),
-                            pair(
-                                Node("Oren", "tag:yaml.org,2002:str"),
-                                Node("Ben-Kiki", "tag:yaml.org,2002:str")
+                            YamlPair(
+                                YamlAlgebraic("Oren").withTag("tag:yaml.org,2002:str"),
+                                YamlAlgebraic("Ben-Kiki").withTag("tag:yaml.org,2002:str")
                             )
-                        ],
-                    "tag:yaml.org,2002:map")
+                        ].dup).withTag("tag:yaml.org,2002:map")
                 )
-            ],
-        "tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:map")
     ];
 }
 
-Node[] constructMerge() @safe
+YamlAlgebraic[] constructMerge() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                Node(
+                YamlAlgebraic(
                     [
-                        pair(
-                            Node("x", "tag:yaml.org,2002:str"),
-                            Node(1L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("x").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(1L).withTag("tag:yaml.org,2002:int")
                         ),
-                        pair(
-                            Node("y", "tag:yaml.org,2002:str"),
-                            Node(2L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("y").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(2L).withTag("tag:yaml.org,2002:int")
                         )
-                    ],
-                "tag:yaml.org,2002:map"),
-                Node(
+                    ].dup).withTag("tag:yaml.org,2002:map"),
+                YamlAlgebraic(
                     [
-                        pair(
-                            Node("x", "tag:yaml.org,2002:str"),
-                            Node(0L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("x").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(0L).withTag("tag:yaml.org,2002:int")
                         ),
-                        pair(
-                            Node("y", "tag:yaml.org,2002:str"),
-                            Node(2L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("y").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(2L).withTag("tag:yaml.org,2002:int")
                         )
-                    ],
-                "tag:yaml.org,2002:map"),
-                Node(
+                    ].dup).withTag("tag:yaml.org,2002:map"),
+                YamlAlgebraic(
                     [
-                        pair(
-                            Node("r", "tag:yaml.org,2002:str"),
-                            Node(10L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("r").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(10L).withTag("tag:yaml.org,2002:int")
                         )
-                    ],
-                "tag:yaml.org,2002:map"),
-                Node(
+                    ].dup).withTag("tag:yaml.org,2002:map"),
+                YamlAlgebraic(
                     [
-                        pair(
-                            Node("r", "tag:yaml.org,2002:str"),
-                            Node(1L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("r").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(1L).withTag("tag:yaml.org,2002:int")
                         )
-                    ],
-                "tag:yaml.org,2002:map"),
-                Node(
+                    ].dup).withTag("tag:yaml.org,2002:map"),
+                YamlAlgebraic(
                     [
-                        pair(
-                            Node("x", "tag:yaml.org,2002:str"),
-                            Node(1L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("x").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(1L).withTag("tag:yaml.org,2002:int")
                         ),
-                        pair(
-                            Node("y", "tag:yaml.org,2002:str"),
-                            Node(2L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("y").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(2L).withTag("tag:yaml.org,2002:int")
                         ),
-                        pair(
-                            Node("r", "tag:yaml.org,2002:str"),
-                            Node(10L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("r").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(10L).withTag("tag:yaml.org,2002:int")
                         ),
-                        pair(
-                            Node("label", "tag:yaml.org,2002:str"),
-                            Node("center/big", "tag:yaml.org,2002:str")
+                        YamlPair(
+                            YamlAlgebraic("label").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic("center/big").withTag("tag:yaml.org,2002:str")
                         )
-                    ],
-                "tag:yaml.org,2002:map"),
-                Node(
+                    ].dup).withTag("tag:yaml.org,2002:map"),
+                YamlAlgebraic(
                     [
-                        pair(
-                            Node("r", "tag:yaml.org,2002:str"),
-                            Node(10L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("r").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(10L).withTag("tag:yaml.org,2002:int")
                         ),
-                        pair(
-                            Node("label", "tag:yaml.org,2002:str"),
-                            Node("center/big", "tag:yaml.org,2002:str")
+                        YamlPair(
+                            YamlAlgebraic("label").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic("center/big").withTag("tag:yaml.org,2002:str")
                         ),
-                        pair(
-                            Node("x", "tag:yaml.org,2002:str"),
-                            Node(1L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("x").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(1L).withTag("tag:yaml.org,2002:int")
                         ),
-                        pair(
-                            Node("y", "tag:yaml.org,2002:str"),
-                            Node(2L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("y").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(2L).withTag("tag:yaml.org,2002:int")
                         )
-                    ],
-                "tag:yaml.org,2002:map"),
-                Node(
+                    ].dup).withTag("tag:yaml.org,2002:map"),
+                YamlAlgebraic(
                     [
-                        pair(
-                            Node("label", "tag:yaml.org,2002:str"),
-                            Node("center/big", "tag:yaml.org,2002:str")
+                        YamlPair(
+                            YamlAlgebraic("label").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic("center/big").withTag("tag:yaml.org,2002:str")
                         ),
-                        pair(
-                            Node("x", "tag:yaml.org,2002:str"),
-                            Node(1L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("x").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(1L).withTag("tag:yaml.org,2002:int")
                         ),
-                        pair(
-                            Node("y", "tag:yaml.org,2002:str"),
-                            Node(2L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("y").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(2L).withTag("tag:yaml.org,2002:int")
                         ),
-                        pair(
-                            Node("r", "tag:yaml.org,2002:str"),
-                            Node(10L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("r").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(10L).withTag("tag:yaml.org,2002:int")
                         )
-                    ],
-                "tag:yaml.org,2002:map"),
-                Node(
+                    ].dup).withTag("tag:yaml.org,2002:map"),
+                YamlAlgebraic(
                     [
-                        pair(
-                            Node("x", "tag:yaml.org,2002:str"),
-                            Node(1L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("x").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(1L).withTag("tag:yaml.org,2002:int")
                         ),
-                        pair(
-                            Node("label", "tag:yaml.org,2002:str"),
-                            Node("center/big", "tag:yaml.org,2002:str")
+                        YamlPair(
+                            YamlAlgebraic("label").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic("center/big").withTag("tag:yaml.org,2002:str")
                         ),
-                        pair(
-                            Node("r", "tag:yaml.org,2002:str"),
-                            Node(10L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("r").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(10L).withTag("tag:yaml.org,2002:int")
                         ),
-                        pair(
-                            Node("y", "tag:yaml.org,2002:str"),
-                            Node(2L, "tag:yaml.org,2002:int")
+                        YamlPair(
+                            YamlAlgebraic("y").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(2L).withTag("tag:yaml.org,2002:int")
                         )
-                    ],
-                "tag:yaml.org,2002:map")
-            ],
-        "tag:yaml.org,2002:seq")
+                    ].dup).withTag("tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:seq")
     ];
 }
 
-Node[] constructNull() @safe
+YamlAlgebraic[] constructNull() @safe
 {
     return [
-        Node(null, "tag:yaml.org,2002:null"),
-        Node(
+        YamlAlgebraic(null).withTag("tag:yaml.org,2002:null"),
+        YamlAlgebraic(
             [
-                pair(
-                    Node("empty", "tag:yaml.org,2002:str"),
-                    Node(null, "tag:yaml.org,2002:null")
+                YamlPair(
+                    YamlAlgebraic("empty").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(null).withTag("tag:yaml.org,2002:null")
                 ),
-                pair(
-                    Node("canonical", "tag:yaml.org,2002:str"),
-                    Node(null, "tag:yaml.org,2002:null")
+                YamlPair(
+                    YamlAlgebraic("canonical").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(null).withTag("tag:yaml.org,2002:null")
                 ),
-                pair(
-                    Node("english", "tag:yaml.org,2002:str"),
-                    Node(null, "tag:yaml.org,2002:null")
+                YamlPair(
+                    YamlAlgebraic("english").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(null).withTag("tag:yaml.org,2002:null")
                 ),
-                pair(
-                    Node(null, "tag:yaml.org,2002:null"),
-                    Node("null key", "tag:yaml.org,2002:str")
+                YamlPair(
+                    YamlAlgebraic(null).withTag("tag:yaml.org,2002:null"),
+                    YamlAlgebraic("null key").withTag("tag:yaml.org,2002:str")
                 )
-            ],
-        "tag:yaml.org,2002:map"),
-        Node(
+            ].dup).withTag("tag:yaml.org,2002:map"),
+        YamlAlgebraic(
             [
-                pair(
-                    Node("sparse", "tag:yaml.org,2002:str"),
-                    Node(
+                YamlPair(
+                    YamlAlgebraic("sparse").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(
                         [
-                            Node(null, "tag:yaml.org,2002:null"),
-                            Node("2nd entry", "tag:yaml.org,2002:str"),
-                            Node(null, "tag:yaml.org,2002:null"),
-                            Node("4th entry", "tag:yaml.org,2002:str"),
-                            Node(null, "tag:yaml.org,2002:null")
-                        ],
-                    "tag:yaml.org,2002:seq")
+                            YamlAlgebraic(null).withTag("tag:yaml.org,2002:null"),
+                            YamlAlgebraic("2nd entry").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(null).withTag("tag:yaml.org,2002:null"),
+                            YamlAlgebraic("4th entry").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic(null).withTag("tag:yaml.org,2002:null")
+                        ].dup).withTag("tag:yaml.org,2002:seq")
                 )
-            ],
-        "tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:map")
     ];
 }
 
-Node[] constructOMap() @safe
+YamlAlgebraic[] constructOMap() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                pair(
-                    Node("Bestiary", "tag:yaml.org,2002:str"),
-                    Node(
+                YamlPair(
+                    YamlAlgebraic("Bestiary").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(
                         [
-                            pair(
-                                Node("aardvark", "tag:yaml.org,2002:str"),
-                                Node("African pig-like ant eater. Ugly.", "tag:yaml.org,2002:str")
+                            YamlPair(
+                                YamlAlgebraic("aardvark").withTag("tag:yaml.org,2002:str"),
+                                YamlAlgebraic("African pig-like ant eater. Ugly.").withTag("tag:yaml.org,2002:str")
                             ),
-                            pair(
-                                Node("anteater", "tag:yaml.org,2002:str"),
-                                Node("South-American ant eater. Two species.", "tag:yaml.org,2002:str")
+                            YamlPair(
+                                YamlAlgebraic("anteater").withTag("tag:yaml.org,2002:str"),
+                                YamlAlgebraic("South-American ant eater. Two species.").withTag("tag:yaml.org,2002:str")
                             ),
-                            pair(
-                                Node("anaconda", "tag:yaml.org,2002:str"),
-                                Node("South-American constrictor snake. Scaly.", "tag:yaml.org,2002:str")
+                            YamlPair(
+                                YamlAlgebraic("anaconda").withTag("tag:yaml.org,2002:str"),
+                                YamlAlgebraic("South-American constrictor snake. Scaly.").withTag("tag:yaml.org,2002:str")
                             )
-                        ],
-                    "tag:yaml.org,2002:omap")
+                        ].dup).withTag("tag:yaml.org,2002:omap")
                 ),
-                pair(
-                    Node("Numbers", "tag:yaml.org,2002:str"),
-                    Node(
+                YamlPair(
+                    YamlAlgebraic("Numbers").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(
                         [
-                            pair(
-                                Node("one", "tag:yaml.org,2002:str"),
-                                Node(1L, "tag:yaml.org,2002:int")
+                            YamlPair(
+                                YamlAlgebraic("one").withTag("tag:yaml.org,2002:str"),
+                                YamlAlgebraic(1L).withTag("tag:yaml.org,2002:int")
                             ),
-                            pair(
-                                Node("two", "tag:yaml.org,2002:str"),
-                                Node(2L, "tag:yaml.org,2002:int")
+                            YamlPair(
+                                YamlAlgebraic("two").withTag("tag:yaml.org,2002:str"),
+                                YamlAlgebraic(2L).withTag("tag:yaml.org,2002:int")
                             ),
-                            pair(
-                                Node("three", "tag:yaml.org,2002:str"),
-                                Node(3L, "tag:yaml.org,2002:int")
+                            YamlPair(
+                                YamlAlgebraic("three").withTag("tag:yaml.org,2002:str"),
+                                YamlAlgebraic(3L).withTag("tag:yaml.org,2002:int")
                             )
-                        ],
-                    "tag:yaml.org,2002:omap")
+                        ].dup).withTag("tag:yaml.org,2002:omap")
                 )
-            ],
-        "tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:map")
     ];
 }
 
-Node[] constructPairs() @safe
+YamlAlgebraic[] constructPairs() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                pair(
-                    Node("Block tasks", "tag:yaml.org,2002:str"),
-                    Node(
+                YamlPair(
+                    YamlAlgebraic("Block tasks").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(
                         [
-                            pair(Node("meeting", "tag:yaml.org,2002:str"), Node("with team.", "tag:yaml.org,2002:str")),
-                            pair(Node("meeting", "tag:yaml.org,2002:str"), Node("with boss.", "tag:yaml.org,2002:str")),
-                            pair(Node("break", "tag:yaml.org,2002:str"), Node("lunch.", "tag:yaml.org,2002:str")),
-                            pair(Node("meeting", "tag:yaml.org,2002:str"), Node("with client.", "tag:yaml.org,2002:str"))
-                        ],
-                    "tag:yaml.org,2002:pairs")
+                            YamlPair(YamlAlgebraic("meeting").withTag("tag:yaml.org,2002:str"), YamlAlgebraic("with team.").withTag("tag:yaml.org,2002:str")),
+                            YamlPair(YamlAlgebraic("meeting").withTag("tag:yaml.org,2002:str"), YamlAlgebraic("with boss.").withTag("tag:yaml.org,2002:str")),
+                            YamlPair(YamlAlgebraic("break").withTag("tag:yaml.org,2002:str"), YamlAlgebraic("lunch.").withTag("tag:yaml.org,2002:str")),
+                            YamlPair(YamlAlgebraic("meeting").withTag("tag:yaml.org,2002:str"), YamlAlgebraic("with client.").withTag("tag:yaml.org,2002:str"))
+                        ].dup).withTag("tag:yaml.org,2002:pairs")
                 ),
-                pair(
-                    Node("Flow tasks", "tag:yaml.org,2002:str"),
-                    Node(
+                YamlPair(
+                    YamlAlgebraic("Flow tasks").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(
                         [
-                            pair(Node("meeting", "tag:yaml.org,2002:str"), Node("with team", "tag:yaml.org,2002:str")),
-                            pair(Node("meeting", "tag:yaml.org,2002:str"), Node("with boss", "tag:yaml.org,2002:str"))
-                        ],
-                    "tag:yaml.org,2002:pairs")
+                            YamlPair(YamlAlgebraic("meeting").withTag("tag:yaml.org,2002:str"), YamlAlgebraic("with team").withTag("tag:yaml.org,2002:str")),
+                            YamlPair(YamlAlgebraic("meeting").withTag("tag:yaml.org,2002:str"), YamlAlgebraic("with boss").withTag("tag:yaml.org,2002:str"))
+                        ].dup).withTag("tag:yaml.org,2002:pairs")
                 )
-            ],
-        "tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:map")
     ];
 }
 
-Node[] constructSeq() @safe
+YamlAlgebraic[] constructSeq() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                pair(
-                    Node("Block style", "tag:yaml.org,2002:str"),
-                    Node([
-                          Node("Mercury", "tag:yaml.org,2002:str"),
-                          Node("Venus", "tag:yaml.org,2002:str"),
-                          Node("Earth", "tag:yaml.org,2002:str"),
-                          Node("Mars", "tag:yaml.org,2002:str"),
-                          Node("Jupiter", "tag:yaml.org,2002:str"),
-                          Node("Saturn", "tag:yaml.org,2002:str"),
-                          Node("Uranus", "tag:yaml.org,2002:str"),
-                          Node("Neptune", "tag:yaml.org,2002:str"),
-                          Node("Pluto", "tag:yaml.org,2002:str")
-                    ], "tag:yaml.org,2002:seq")
+                YamlPair(
+                    YamlAlgebraic("Block style").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic([
+                          YamlAlgebraic("Mercury").withTag("tag:yaml.org,2002:str"),
+                          YamlAlgebraic("Venus").withTag("tag:yaml.org,2002:str"),
+                          YamlAlgebraic("Earth").withTag("tag:yaml.org,2002:str"),
+                          YamlAlgebraic("Mars").withTag("tag:yaml.org,2002:str"),
+                          YamlAlgebraic("Jupiter").withTag("tag:yaml.org,2002:str"),
+                          YamlAlgebraic("Saturn").withTag("tag:yaml.org,2002:str"),
+                          YamlAlgebraic("Uranus").withTag("tag:yaml.org,2002:str"),
+                          YamlAlgebraic("Neptune").withTag("tag:yaml.org,2002:str"),
+                          YamlAlgebraic("Pluto").withTag("tag:yaml.org,2002:str")
+                    ].dup).withTag("tag:yaml.org,2002:seq")
                 ),
-                pair(
-                    Node("Flow style", "tag:yaml.org,2002:str"),
-                    Node([
-                        Node("Mercury", "tag:yaml.org,2002:str"),
-                        Node("Venus", "tag:yaml.org,2002:str"),
-                        Node("Earth", "tag:yaml.org,2002:str"),
-                        Node("Mars", "tag:yaml.org,2002:str"),
-                        Node("Jupiter", "tag:yaml.org,2002:str"),
-                        Node("Saturn", "tag:yaml.org,2002:str"),
-                        Node("Uranus", "tag:yaml.org,2002:str"),
-                        Node("Neptune", "tag:yaml.org,2002:str"),
-                        Node("Pluto", "tag:yaml.org,2002:str")
-                    ], "tag:yaml.org,2002:seq")
+                YamlPair(
+                    YamlAlgebraic("Flow style").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic([
+                        YamlAlgebraic("Mercury").withTag("tag:yaml.org,2002:str"),
+                        YamlAlgebraic("Venus").withTag("tag:yaml.org,2002:str"),
+                        YamlAlgebraic("Earth").withTag("tag:yaml.org,2002:str"),
+                        YamlAlgebraic("Mars").withTag("tag:yaml.org,2002:str"),
+                        YamlAlgebraic("Jupiter").withTag("tag:yaml.org,2002:str"),
+                        YamlAlgebraic("Saturn").withTag("tag:yaml.org,2002:str"),
+                        YamlAlgebraic("Uranus").withTag("tag:yaml.org,2002:str"),
+                        YamlAlgebraic("Neptune").withTag("tag:yaml.org,2002:str"),
+                        YamlAlgebraic("Pluto").withTag("tag:yaml.org,2002:str")
+                    ].dup).withTag("tag:yaml.org,2002:seq")
                 )
-            ],
-        "tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:map")
     ];
 }
 
-Node[] constructSet() @safe
+YamlAlgebraic[] constructSet() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                pair(
-                    Node("baseball players", "tag:yaml.org,2002:str"),
-                    Node(
+                YamlPair(
+                    YamlAlgebraic("baseball players").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(
                         [
-                            Node("Mark McGwire", "tag:yaml.org,2002:str"),
-                            Node("Sammy Sosa", "tag:yaml.org,2002:str"),
-                            Node("Ken Griffey", "tag:yaml.org,2002:str")
-                        ],
-                    "tag:yaml.org,2002:set")
+                            YamlAlgebraic("Mark McGwire").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic("Sammy Sosa").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic("Ken Griffey").withTag("tag:yaml.org,2002:str")
+                        ].dup).withTag("tag:yaml.org,2002:set")
                 ),
-                pair(
-                    Node("baseball teams", "tag:yaml.org,2002:str"),
-                    Node(
+                YamlPair(
+                    YamlAlgebraic("baseball teams").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(
                             [
-                            Node("Boston Red Sox", "tag:yaml.org,2002:str"),
-                            Node("Detroit Tigers", "tag:yaml.org,2002:str"),
-                            Node("New York Yankees", "tag:yaml.org,2002:str")
-                        ],
-                    "tag:yaml.org,2002:set")
+                            YamlAlgebraic("Boston Red Sox").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic("Detroit Tigers").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic("New York Yankees").withTag("tag:yaml.org,2002:str")
+                        ].dup).withTag("tag:yaml.org,2002:set")
                 )
-            ],
-        "tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:map")
     ];
 }
 
-Node[] constructStrASCII() @safe
+YamlAlgebraic[] constructStrASCII() @safe
 {
     return [
-        Node("ascii string", "tag:yaml.org,2002:str")
+        YamlAlgebraic("ascii string").withTag("tag:yaml.org,2002:str")
     ];
 }
 
-Node[] constructStr() @safe
+YamlAlgebraic[] constructStr() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                pair(
-                    Node("string", "tag:yaml.org,2002:str"),
-                    Node("abcd", "tag:yaml.org,2002:str")
+                YamlPair(
+                    YamlAlgebraic("string").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic("abcd").withTag("tag:yaml.org,2002:str")
                 )
-            ],
-        "tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:map")
     ];
 }
 
-Node[] constructStrUTF8() @safe
+YamlAlgebraic[] constructStrUTF8() @safe
 {
     return [
-        Node("\u042d\u0442\u043e \u0443\u043d\u0438\u043a\u043e\u0434\u043d\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430", "tag:yaml.org,2002:str")
+        YamlAlgebraic("\u042d\u0442\u043e \u0443\u043d\u0438\u043a\u043e\u0434\u043d\u0430\u044f \u0441\u0442\u0440\u043e\u043a\u0430").withTag("tag:yaml.org,2002:str")
     ];
 }
 
@@ -643,230 +605,218 @@ Node[] constructStrUTF8() @safe
 // no time zone (Z): 2001-12-15 2:59:43.1
 // date (00:00:00Z): 2002-12-14
 
-Node[] constructTimestamp() @safe
+YamlAlgebraic[] constructTimestamp() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                pair(
-                    Node("canonical", "tag:yaml.org,2002:str"),
-                    Node(Timestamp(2001, 12, 15, 2, 59, 43, -1, 1), "tag:yaml.org,2002:timestamp")
+                YamlPair(
+                    YamlAlgebraic("canonical").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(Timestamp(2001, 12, 15, 2, 59, 43, -1, 1)).withTag("tag:yaml.org,2002:timestamp")
                 ),
-                pair(
-                    Node("valid iso8601", "tag:yaml.org,2002:str"),
-                    Node(Timestamp(2001, 12, 15, 2, 59, 43, -1, 1).withOffset(-300), "tag:yaml.org,2002:timestamp")
+                YamlPair(
+                    YamlAlgebraic("valid iso8601").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(Timestamp(2001, 12, 15, 2, 59, 43, -1, 1).withOffset(-300)).withTag("tag:yaml.org,2002:timestamp")
                 ),
-                pair(
-                    Node("space separated", "tag:yaml.org,2002:str"),
-                    Node(Timestamp(2001, 12, 15, 2, 59, 43, -1, 1).withOffset(-300), "tag:yaml.org,2002:timestamp")
+                YamlPair(
+                    YamlAlgebraic("space separated").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(Timestamp(2001, 12, 15, 2, 59, 43, -1, 1).withOffset(-300)).withTag("tag:yaml.org,2002:timestamp")
                 ),
-                pair(
-                    Node("no time zone (Z)", "tag:yaml.org,2002:str"),
-                    Node(Timestamp(2001, 12, 15, 2, 59, 43, -1, 1), "tag:yaml.org,2002:timestamp")
+                YamlPair(
+                    YamlAlgebraic("no time zone (Z)").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(Timestamp(2001, 12, 15, 2, 59, 43, -1, 1)).withTag("tag:yaml.org,2002:timestamp")
                 ),
-                pair(
-                    Node("date (00:00:00Z)", "tag:yaml.org,2002:str"),
-                    Node(Timestamp(2002, 12, 14), "tag:yaml.org,2002:timestamp")
+                YamlPair(
+                    YamlAlgebraic("date (00:00:00Z)").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(Timestamp(2002, 12, 14)).withTag("tag:yaml.org,2002:timestamp")
                 )
-            ],
-        "tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:map")
     ];
 }
 
-Node[] constructValue() @safe
+YamlAlgebraic[] constructValue() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                pair(
-                    Node("link with", "tag:yaml.org,2002:str"),
-                    Node(
+                YamlPair(
+                    YamlAlgebraic("link with").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(
                         [
-                            Node("library1.dll", "tag:yaml.org,2002:str"),
-                            Node("library2.dll", "tag:yaml.org,2002:str")
-                        ],
-                    "tag:yaml.org,2002:seq")
+                            YamlAlgebraic("library1.dll").withTag("tag:yaml.org,2002:str"),
+                            YamlAlgebraic("library2.dll").withTag("tag:yaml.org,2002:str")
+                        ].dup).withTag("tag:yaml.org,2002:seq")
                 )
-            ],
-        "tag:yaml.org,2002:map"),
-        Node(
+            ].dup).withTag("tag:yaml.org,2002:map"),
+        YamlAlgebraic(
             [
-                pair(
-                    Node("link with", "tag:yaml.org,2002:str"),
-                    Node(
+                YamlPair(
+                    YamlAlgebraic("link with").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(
                         [
-                            Node(
+                            YamlAlgebraic(
                                 [
-                                    pair(
-                                        Node("=", "tag:yaml.org,2002:value"),
-                                        Node("library1.dll", "tag:yaml.org,2002:str")
+                                    YamlPair(
+                                        YamlAlgebraic("=").withTag("tag:yaml.org,2002:value"),
+                                        YamlAlgebraic("library1.dll").withTag("tag:yaml.org,2002:str")
                                     ),
-                                    pair(
-                                        Node("version", "tag:yaml.org,2002:str"),
-                                        Node(1.2L, "tag:yaml.org,2002:float")
+                                    YamlPair(
+                                        YamlAlgebraic("version").withTag("tag:yaml.org,2002:str"),
+                                        YamlAlgebraic(1.2L).withTag("tag:yaml.org,2002:float")
                                     )
-                                ],
-                            "tag:yaml.org,2002:map"),
-                            Node(
+                                ].dup).withTag("tag:yaml.org,2002:map"),
+                            YamlAlgebraic(
                                 [
-                                    pair(
-                                        Node("=", "tag:yaml.org,2002:value"),
-                                        Node("library2.dll", "tag:yaml.org,2002:str")
+                                    YamlPair(
+                                        YamlAlgebraic("=").withTag("tag:yaml.org,2002:value"),
+                                        YamlAlgebraic("library2.dll").withTag("tag:yaml.org,2002:str")
                                     ),
-                                    pair(
-                                        Node("version", "tag:yaml.org,2002:str"),
-                                        Node(2.3L, "tag:yaml.org,2002:float")
+                                    YamlPair(
+                                        YamlAlgebraic("version").withTag("tag:yaml.org,2002:str"),
+                                        YamlAlgebraic(2.3L).withTag("tag:yaml.org,2002:float")
                                     )
-                                ],
-                            "tag:yaml.org,2002:map")
-                        ],
-                    "tag:yaml.org,2002:seq")
+                                ].dup).withTag("tag:yaml.org,2002:map")
+                        ].dup).withTag("tag:yaml.org,2002:seq")
                 )
-            ],
-        "tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:map")
     ];
 }
 
-Node[] duplicateMergeKey() @safe
+YamlAlgebraic[] duplicateMergeKey() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                pair(
-                    Node("foo", "tag:yaml.org,2002:str"),
-                    Node("bar", "tag:yaml.org,2002:str")
+                YamlPair(
+                    YamlAlgebraic("foo").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic("bar").withTag("tag:yaml.org,2002:str")
                 ),
-                pair(
-                    Node("x", "tag:yaml.org,2002:str"),
-                    Node(1L, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic("x").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(1L).withTag("tag:yaml.org,2002:int")
                 ),
-                pair(
-                    Node("y", "tag:yaml.org,2002:str"),
-                    Node(2L, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic("y").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(2L).withTag("tag:yaml.org,2002:int")
                 ),
-                pair(
-                    Node("z", "tag:yaml.org,2002:str"),
-                    Node(3L, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic("z").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(3L).withTag("tag:yaml.org,2002:int")
                 ),
-                pair(
-                    Node("t", "tag:yaml.org,2002:str"),
-                    Node(4L, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic("t").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(4L).withTag("tag:yaml.org,2002:int")
                 )
-            ],
-        "tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:map")
     ];
 }
 
-Node[] floatRepresenterBug() @safe
+YamlAlgebraic[] floatRepresenterBug() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                pair(
-                    Node(1.0L, "tag:yaml.org,2002:float"),
-                    Node(1L, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic(1.0L).withTag("tag:yaml.org,2002:float"),
+                    YamlAlgebraic(1L).withTag("tag:yaml.org,2002:int")
                 ),
-                pair(
-                    Node(double.infinity, "tag:yaml.org,2002:float"),
-                    Node(10L, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic(double.infinity).withTag("tag:yaml.org,2002:float"),
+                    YamlAlgebraic(10L).withTag("tag:yaml.org,2002:int")
                 ),
-                pair(
-                    Node(-double.infinity, "tag:yaml.org,2002:float"),
-                    Node(-10L, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic(-double.infinity).withTag("tag:yaml.org,2002:float"),
+                    YamlAlgebraic(-10L).withTag("tag:yaml.org,2002:int")
                 ),
-                pair(
-                    Node(double.nan, "tag:yaml.org,2002:float"),
-                    Node(100L, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic(double.nan).withTag("tag:yaml.org,2002:float"),
+                    YamlAlgebraic(100L).withTag("tag:yaml.org,2002:int")
                 )
-            ],
-        "tag:yaml.org,2002:map")
+            ].dup).withTag("tag:yaml.org,2002:map")
     ];
 }
 
-Node[] invalidSingleQuoteBug() @safe
+YamlAlgebraic[] invalidSingleQuoteBug() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                Node("foo \'bar\'", "tag:yaml.org,2002:str"),
-                Node("foo\n\'bar\'", "tag:yaml.org,2002:str")
-            ],
-        "tag:yaml.org,2002:seq")
+                YamlAlgebraic("foo \'bar\'").withTag("tag:yaml.org,2002:str"),
+                YamlAlgebraic("foo\n\'bar\'").withTag("tag:yaml.org,2002:str")
+            ].dup).withTag("tag:yaml.org,2002:seq")
     ];
 }
 
-Node[] moreFloats() @safe
+YamlAlgebraic[] moreFloats() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                Node(0.0L, "tag:yaml.org,2002:float"),
-                Node(1.0L, "tag:yaml.org,2002:float"),
-                Node(-1.0L, "tag:yaml.org,2002:float"),
-                Node(double.infinity, "tag:yaml.org,2002:float"),
-                Node(-double.infinity, "tag:yaml.org,2002:float"),
-                Node(double.nan, "tag:yaml.org,2002:float"),
-                Node(double.nan, "tag:yaml.org,2002:float")
-            ],
-        "tag:yaml.org,2002:seq")
+                YamlAlgebraic(0.0L).withTag("tag:yaml.org,2002:float"),
+                YamlAlgebraic(1.0L).withTag("tag:yaml.org,2002:float"),
+                YamlAlgebraic(-1.0L).withTag("tag:yaml.org,2002:float"),
+                YamlAlgebraic(double.infinity).withTag("tag:yaml.org,2002:float"),
+                YamlAlgebraic(-double.infinity).withTag("tag:yaml.org,2002:float"),
+                YamlAlgebraic(double.nan).withTag("tag:yaml.org,2002:float"),
+                YamlAlgebraic(double.nan).withTag("tag:yaml.org,2002:float")
+            ].dup).withTag("tag:yaml.org,2002:seq")
     ];
 }
 
-Node[] negativeFloatBug() @safe
+YamlAlgebraic[] negativeFloatBug() @safe
 {
     return [
-        Node(-1.0L, "tag:yaml.org,2002:float")
+        YamlAlgebraic(-1.0L).withTag("tag:yaml.org,2002:float")
     ];
 }
 
-Node[] singleDotFloatBug() @safe
+YamlAlgebraic[] singleDotFloatBug() @safe
 {
     return [
-        Node(".", "tag:yaml.org,2002:str")
+        YamlAlgebraic(".").withTag("tag:yaml.org,2002:str")
     ];
 }
 
-Node[] timestampBugs() @safe
+YamlAlgebraic[] timestampBugs() @safe
 {
     return [
-        Node(
+        YamlAlgebraic(
             [
-                "2001-12-14T21:59:43.1-05:30".Timestamp.Node("tag:yaml.org,2002:timestamp"),
-                "2001-12-14T21:59:43.1+05:30".Timestamp.Node("tag:yaml.org,2002:timestamp"),
-                "2001-12-14T21:59:43.00101Z".Timestamp.Node("tag:yaml.org,2002:timestamp"),
-                "2001-12-14T21:59:43+01".Timestamp.Node("tag:yaml.org,2002:timestamp"),
-                "2001-12-14T21:59:43-01:30".Timestamp.Node("tag:yaml.org,2002:timestamp"),
-                "2005-07-08T17:35:04.517600Z".Timestamp.Node("tag:yaml.org,2002:timestamp")
-            ],
-        "tag:yaml.org,2002:seq")
+                "2001-12-14T21:59:43.1-05:30".Timestamp.YamlAlgebraic.withTag("tag:yaml.org,2002:timestamp"),
+                "2001-12-14T21:59:43.1+05:30".Timestamp.YamlAlgebraic.withTag("tag:yaml.org,2002:timestamp"),
+                "2001-12-14T21:59:43.00101Z".Timestamp.YamlAlgebraic.withTag("tag:yaml.org,2002:timestamp"),
+                "2001-12-14T21:59:43+01".Timestamp.YamlAlgebraic.withTag("tag:yaml.org,2002:timestamp"),
+                "2001-12-14T21:59:43-01:30".Timestamp.YamlAlgebraic.withTag("tag:yaml.org,2002:timestamp"),
+                "2005-07-08T17:35:04.517600Z".Timestamp.YamlAlgebraic.withTag("tag:yaml.org,2002:timestamp")
+            ].dup).withTag("tag:yaml.org,2002:seq")
     ];
 }
 
-Node[] utf16be() @safe
+YamlAlgebraic[] utf16be() @safe
 {
     return [
-        Node("UTF-16-BE", "tag:yaml.org,2002:str")
+        YamlAlgebraic("UTF-16-BE").withTag("tag:yaml.org,2002:str")
     ];
 }
 
-Node[] utf16le() @safe
+YamlAlgebraic[] utf16le() @safe
 {
     return [
-        Node("UTF-16-LE", "tag:yaml.org,2002:str")
+        YamlAlgebraic("UTF-16-LE").withTag("tag:yaml.org,2002:str")
     ];
 }
 
-Node[] utf8() @safe
+YamlAlgebraic[] utf8() @safe
 {
     return [
-        Node("UTF-8", "tag:yaml.org,2002:str")
+        YamlAlgebraic("UTF-8").withTag("tag:yaml.org,2002:str")
     ];
 }
 
-Node[] utf8implicit() @safe
+YamlAlgebraic[] utf8implicit() @safe
 {
     return [
-        Node("implicit UTF-8", "tag:yaml.org,2002:str")
+        YamlAlgebraic("implicit UTF-8").withTag("tag:yaml.org,2002:str")
     ];
 }
 
@@ -882,24 +832,23 @@ class TestClass
         this.z = z;
     }
 
-    Node opCast(T: Node)() @safe
+    YamlAlgebraic opCast(T: YamlAlgebraic)() @safe
     {
-        return Node(
+        return YamlAlgebraic(
             [
-                Node.Pair(
-                    Node("x", "tag:yaml.org,2002:str"),
-                    Node(x, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic("x").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(x).withTag("tag:yaml.org,2002:int")
                 ),
-                Node.Pair(
-                    Node("y", "tag:yaml.org,2002:str"),
-                    Node(y, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic("y").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(y).withTag("tag:yaml.org,2002:int")
                 ),
-                Node.Pair(
-                    Node("z", "tag:yaml.org,2002:str"),
-                    Node(z, "tag:yaml.org,2002:int")
+                YamlPair(
+                    YamlAlgebraic("z").withTag("tag:yaml.org,2002:str"),
+                    YamlAlgebraic(z).withTag("tag:yaml.org,2002:int")
                 )
-            ],
-        "!tag1");
+            ].dup).withTag("!tag1");
     }
 }
 
@@ -914,20 +863,19 @@ struct TestStruct
     }
 
     ///Constructor function for TestStruct.
-    this(ref Node node) @safe
+    this(ref YamlAlgebraic node) @safe
     {
-        value = node.as!string.to!int;
+        value = node.get!string.to!int;
     }
 
     ///Representer function for TestStruct.
-    Node opCast(T: Node)() @safe
+    YamlAlgebraic opCast(T: YamlAlgebraic)() @safe
     {
-        return Node(value.to!string, "!tag2");
+        return YamlAlgebraic(value.to!string).withTag("!tag2");
     }
 }
 
 } // version(unittest)
-
 
 @safe unittest
 {
@@ -947,11 +895,11 @@ struct TestStruct
 
         auto loader = Loader.fromFile(dataFilename);
 
-        Node[] exp = expected[base];
+        YamlAlgebraic[] exp = expected[base];
 
         //Compare with expected results document by document.
         size_t i;
-        foreach (node; loader)
+        foreach (node; loader.loadAll)
         {
             assertNodesEqual(node, exp[i]);
             ++i;

@@ -33,7 +33,6 @@ jobs:
         dub build --root examples/representer
         dub build --root examples/resolver
         dub build --root examples/tojson
-        dub build --root examples/yaml_bench
         dub build --root examples/yaml_gen
         dub build --root examples/yaml_stats
         dub build --root testsuite

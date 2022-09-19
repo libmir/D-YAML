@@ -20,9 +20,9 @@ import std.typecons;
 import dyaml.event;
 import dyaml.exception;
 import dyaml.scanner;
-import dyaml.style;
 import dyaml.token;
 import dyaml.tagdirective;
+import mir.algebraic_alias.yaml: YamlScalarStyle, YamlCollectionStyle;
 
 
 package:
@@ -92,9 +92,9 @@ package:
 /**
  * Marked exception thrown at parser errors.
  *
- * See_Also: MarkedYAMLException
+ * See_Also: MarkedYamlException
  */
-class ParserException : MarkedYAMLException
+class ParserException : MarkedYamlException
 {
     mixin MarkedExceptionCtors;
 }
@@ -105,7 +105,7 @@ class ParserException : MarkedYAMLException
 /// produces are immutable strings, which are usually the same slices, cast to string.
 /// Parser is the last layer of D:YAML that may possibly do any modifications to these
 /// slices.
-final class Parser
+struct Parser
 {
     private:
         ///Default tag handle shortcuts and replacements.
@@ -113,7 +113,7 @@ final class Parser
             [TagDirective("!", "!"), TagDirective("!!", "tag:yaml.org,2002:")];
 
         ///Scanner providing YAML tokens.
-        Scanner scanner_;
+        package Scanner scanner_;
 
         ///Event produced by the most recent state.
         Event currentEvent_;
@@ -124,19 +124,46 @@ final class Parser
         TagDirective[] tagDirectives_;
 
         ///Stack of states.
-        Appender!(Event delegate() @safe[]) states_;
+        Appender!(State[]) states_;
         ///Stack of marks used to keep track of extents of e.g. YAML collections.
-        Appender!(Mark[]) marks_;
+        Appender!(ParsePosition[]) marks_;
 
         ///Current state.
-        Event delegate() @safe state_;
+        State state_;
+
+        enum State : ubyte
+        {
+            none,
+            parseBlockMappingKeyNo,
+            parseBlockMappingKeyYes,
+            parseBlockMappingValue,
+            parseBlockNode,
+            parseBlockSequenceEntryNo,
+            parseBlockSequenceEntryYes,
+            parseDocumentContent,
+            parseDocumentEnd,
+            parseDocumentStart,
+            parseFlowMappingEmptyValue,
+            parseFlowMappingKeyNo,
+            parseFlowMappingKeyYes,
+            parseFlowSequenceEntryMappingKey,
+            parseFlowSequenceEntryNo,
+            parseFlowSequenceEntryYes,
+            parseImplicitDocumentStart,
+            parseIndentlessSequenceEntry,
+            parseStreamStart,
+            parseFlowMappingValue,
+            parseFlowSequenceEntryMappingValue,
+            parseFlowSequenceEntryMappingEnd,
+        }
 
     public:
         ///Construct a Parser using specified Scanner.
         this(Scanner scanner) @safe
         {
-            state_ = &parseStreamStart;
-            scanner_ = scanner;
+            import core.lifetime;
+            state_ = State.parseStreamStart;
+            scanner_ = move(scanner);
             states_.reserve(32);
             marks_.reserve(32);
         }
@@ -177,38 +204,46 @@ final class Parser
         /// If current event is invalid, load the next valid one if possible.
         void ensureState() @safe
         {
-            if(currentEvent_.isNull && state_ !is null)
+            if (currentEvent_.isNull)
             {
-                currentEvent_ = state_();
+                final switch (state_)
+                {
+                    case State.none: break;
+                    static foreach (s; __traits(allMembers, State)[1 .. $])
+                    case __traits(getMember, State, s): {
+                        currentEvent_ = __traits(getMember, this, s);
+                        return;
+                    }
+                }
             }
         }
         ///Pop and return the newest state in states_.
-        Event delegate() @safe popState() @safe
+        State popState() @safe
         {
             enforce(states_.data.length > 0,
-                    new YAMLException("Parser: Need to pop state but no states left to pop"));
+                    new YamlException("Parser: Need to pop state but no states left to pop"));
             const result = states_.data.back;
             states_.shrinkTo(states_.data.length - 1);
             return result;
         }
 
         ///Pop and return the newest mark in marks_.
-        Mark popMark() @safe
+        ParsePosition popMark() @safe
         {
             enforce(marks_.data.length > 0,
-                    new YAMLException("Parser: Need to pop mark but no marks left to pop"));
+                    new YamlException("Parser: Need to pop mark but no marks left to pop"));
             const result = marks_.data.back;
             marks_.shrinkTo(marks_.data.length - 1);
             return result;
         }
 
         /// Push a state on the stack
-        void pushState(Event delegate() @safe state) @safe
+        void pushState(State state) @safe
         {
             states_ ~= state;
         }
         /// Push a mark on the stack
-        void pushMark(Mark mark) @safe
+        void pushMark(ParsePosition mark) @safe
         {
             marks_ ~= mark;
         }
@@ -224,7 +259,7 @@ final class Parser
         {
             const token = scanner_.front;
             scanner_.popFront();
-            state_ = &parseImplicitDocumentStart;
+            state_ = State.parseImplicitDocumentStart;
             return streamStartEvent(token.startMark, token.endMark);
         }
 
@@ -238,8 +273,8 @@ final class Parser
                 tagDirectives_  = defaultTagDirectives_;
                 const token = scanner_.front;
 
-                pushState(&parseDocumentEnd);
-                state_ = &parseBlockNode;
+                pushState(State.parseDocumentEnd);
+                state_ = State.parseBlockNode;
 
                 return documentStartEvent(token.startMark, token.endMark, false, null, null);
             }
@@ -268,8 +303,8 @@ final class Parser
 
                 const endMark = scanner_.front.endMark;
                 scanner_.popFront();
-                pushState(&parseDocumentEnd);
-                state_ = &parseDocumentContent;
+                pushState(State.parseDocumentEnd);
+                state_ = State.parseDocumentContent;
                 return documentStartEvent(startMark, endMark, true, YAMLVersion_, tagDirectives);
             }
             else
@@ -279,7 +314,7 @@ final class Parser
                 scanner_.popFront();
                 assert(states_.data.length == 0);
                 assert(marks_.data.length == 0);
-                state_ = null;
+                state_ = State.none;
                 return streamEndEvent(token.startMark, token.endMark);
             }
         }
@@ -287,16 +322,16 @@ final class Parser
         ///Parse document end (explicit or implicit).
         Event parseDocumentEnd() @safe
         {
-            Mark startMark = scanner_.front.startMark;
+            ParsePosition startMark = scanner_.front.startMark;
             const bool explicit = scanner_.front.id == TokenID.documentEnd;
-            Mark endMark = startMark;
+            ParsePosition endMark = startMark;
             if (explicit)
             {
                 endMark = scanner_.front.endMark;
                 scanner_.popFront();
             }
 
-            state_ = &parseDocumentStart;
+            state_ = State.parseDocumentStart;
 
             return documentEndEvent(startMark, endMark, explicit);
         }
@@ -405,7 +440,7 @@ final class Parser
 
             string anchor;
             string tag;
-            Mark startMark, endMark, tagMark;
+            ParsePosition startMark, endMark, tagMark;
             bool invalidMarks = true;
             // The index in the tag string where tag handle ends and tag suffix starts.
             uint tagHandleEnd;
@@ -443,21 +478,21 @@ final class Parser
 
             if(indentlessSequence && scanner_.front.id == TokenID.blockEntry)
             {
-                state_ = &parseIndentlessSequenceEntry;
+                state_ = State.parseIndentlessSequenceEntry;
                 return sequenceStartEvent
                     (startMark, scanner_.front.endMark, anchor,
-                     tag, implicit, CollectionStyle.block);
+                     tag, implicit, YamlCollectionStyle.block);
             }
 
             if(scanner_.front.id == TokenID.scalar)
             {
                 auto token = scanner_.front;
                 scanner_.popFront();
-                auto value = token.style == ScalarStyle.doubleQuoted
+                auto value = token.style == YamlScalarStyle.doubleQuoted
                            ? handleDoubleQuotedScalarEscapes(token.value)
                            : cast(string)token.value;
 
-                implicit = (token.style == ScalarStyle.plain && tag is null) || tag == "!";
+                implicit = (token.style == YamlScalarStyle.plain && tag is null) || tag == "!";
                 state_ = popState();
                 return scalarEvent(startMark, token.endMark, anchor, tag,
                                    implicit, value, token.style);
@@ -466,33 +501,33 @@ final class Parser
             if(scanner_.front.id == TokenID.flowSequenceStart)
             {
                 endMark = scanner_.front.endMark;
-                state_ = &parseFlowSequenceEntry!(Yes.first);
+                state_ = State.parseFlowSequenceEntryYes;
                 return sequenceStartEvent(startMark, endMark, anchor, tag,
-                                          implicit, CollectionStyle.flow);
+                                          implicit, YamlCollectionStyle.flow);
             }
 
             if(scanner_.front.id == TokenID.flowMappingStart)
             {
                 endMark = scanner_.front.endMark;
-                state_ = &parseFlowMappingKey!(Yes.first);
+                state_ = State.parseFlowMappingKeyYes;
                 return mappingStartEvent(startMark, endMark, anchor, tag,
-                                         implicit, CollectionStyle.flow);
+                                         implicit, YamlCollectionStyle.flow);
             }
 
             if(block && scanner_.front.id == TokenID.blockSequenceStart)
             {
                 endMark = scanner_.front.endMark;
-                state_ = &parseBlockSequenceEntry!(Yes.first);
+                state_ = State.parseBlockSequenceEntryYes;
                 return sequenceStartEvent(startMark, endMark, anchor, tag,
-                                          implicit, CollectionStyle.block);
+                                          implicit, YamlCollectionStyle.block);
             }
 
             if(block && scanner_.front.id == TokenID.blockMappingStart)
             {
                 endMark = scanner_.front.endMark;
-                state_ = &parseBlockMappingKey!(Yes.first);
+                state_ = State.parseBlockMappingKeyYes;
                 return mappingStartEvent(startMark, endMark, anchor, tag,
-                                         implicit, CollectionStyle.block);
+                                         implicit, YamlCollectionStyle.block);
             }
 
             if(anchor !is null || tag !is null)
@@ -599,7 +634,7 @@ final class Parser
          *          tagMark   = Position of the tag.
          */
         string processTag(const string tag, const uint handleEnd,
-                          const Mark startMark, const Mark tagMark)
+                          const ParsePosition startMark, const ParsePosition tagMark)
             const @safe
         {
             const handle = tag[0 .. handleEnd];
@@ -633,6 +668,8 @@ final class Parser
         ///block_sequence ::= BLOCK-SEQUENCE-START (BLOCK-ENTRY block_node?)* BLOCK-END
 
         ///Parse an entry of a block sequence. If first is true, this is the first entry.
+        alias parseBlockSequenceEntryYes = parseBlockSequenceEntry!(Flag!"first".yes);
+        alias parseBlockSequenceEntryNo = parseBlockSequenceEntry!(Flag!"first".no);
         Event parseBlockSequenceEntry(Flag!"first" first)() @safe
         {
             static if(first)
@@ -647,11 +684,11 @@ final class Parser
                 scanner_.popFront();
                 if(!scanner_.front.id.among!(TokenID.blockEntry, TokenID.blockEnd))
                 {
-                    pushState(&parseBlockSequenceEntry!(No.first));
+                    pushState(State.parseBlockSequenceEntryNo);
                     return parseBlockNode();
                 }
 
-                state_ = &parseBlockSequenceEntry!(No.first);
+                state_ = State.parseBlockSequenceEntryNo;
                 return processEmptyScalar(token.endMark);
             }
 
@@ -683,11 +720,11 @@ final class Parser
                 if(!scanner_.front.id.among!(TokenID.blockEntry, TokenID.key,
                                         TokenID.value, TokenID.blockEnd))
                 {
-                    pushState(&parseIndentlessSequenceEntry);
+                    pushState(State.parseIndentlessSequenceEntry);
                     return parseBlockNode();
                 }
 
-                state_ = &parseIndentlessSequenceEntry;
+                state_ = State.parseIndentlessSequenceEntry;
                 return processEmptyScalar(token.endMark);
             }
 
@@ -704,6 +741,8 @@ final class Parser
          */
 
         ///Parse a key in a block mapping. If first is true, this is the first key.
+        alias parseBlockMappingKeyYes = parseBlockMappingKey!(Flag!"first".yes);
+        alias parseBlockMappingKeyNo = parseBlockMappingKey!(Flag!"first".no);
         Event parseBlockMappingKey(Flag!"first" first)() @safe
         {
             static if(first)
@@ -719,11 +758,11 @@ final class Parser
 
                 if(!scanner_.front.id.among!(TokenID.key, TokenID.value, TokenID.blockEnd))
                 {
-                    pushState(&parseBlockMappingValue);
+                    pushState(State.parseBlockMappingValue);
                     return parseBlockNodeOrIndentlessSequence();
                 }
 
-                state_ = &parseBlockMappingValue;
+                state_ = State.parseBlockMappingValue;
                 return processEmptyScalar(token.endMark);
             }
 
@@ -752,15 +791,15 @@ final class Parser
 
                 if(!scanner_.front.id.among!(TokenID.key, TokenID.value, TokenID.blockEnd))
                 {
-                    pushState(&parseBlockMappingKey!(No.first));
+                    pushState(State.parseBlockMappingKeyNo);
                     return parseBlockNodeOrIndentlessSequence();
                 }
 
-                state_ = &parseBlockMappingKey!(No.first);
+                state_ = State.parseBlockMappingKeyNo;
                 return processEmptyScalar(token.endMark);
             }
 
-            state_= &parseBlockMappingKey!(No.first);
+            state_= State.parseBlockMappingKeyNo;
             return processEmptyScalar(scanner_.front.startMark);
         }
 
@@ -778,6 +817,8 @@ final class Parser
          */
 
         ///Parse an entry in a flow sequence. If first is true, this is the first entry.
+        alias parseFlowSequenceEntryYes = parseFlowSequenceEntry!(Flag!"first".yes);
+        alias parseFlowSequenceEntryNo = parseFlowSequenceEntry!(Flag!"first".no);
         Event parseFlowSequenceEntry(Flag!"first" first)() @safe
         {
             static if(first)
@@ -806,13 +847,13 @@ final class Parser
                 if(scanner_.front.id == TokenID.key)
                 {
                     const token = scanner_.front;
-                    state_ = &parseFlowSequenceEntryMappingKey;
+                    state_ = State.parseFlowSequenceEntryMappingKey;
                     return mappingStartEvent(token.startMark, token.endMark,
-                                             null, null, true, CollectionStyle.flow);
+                                             null, null, true, YamlCollectionStyle.flow);
                 }
                 else if(scanner_.front.id != TokenID.flowSequenceEnd)
                 {
-                    pushState(&parseFlowSequenceEntry!(No.first));
+                    pushState(State.parseFlowSequenceEntryNo);
                     return parseFlowNode();
                 }
             }
@@ -825,7 +866,7 @@ final class Parser
         }
 
         ///Parse a key in flow context.
-        Event parseFlowKey(Event delegate() @safe nextState) @safe
+        Event parseFlowKey(State nextState) @safe
         {
             const token = scanner_.front;
             scanner_.popFront();
@@ -844,11 +885,11 @@ final class Parser
         ///Parse a mapping key in an entry in a flow sequence.
         Event parseFlowSequenceEntryMappingKey() @safe
         {
-            return parseFlowKey(&parseFlowSequenceEntryMappingValue);
+            return parseFlowKey(State.parseFlowSequenceEntryMappingValue);
         }
 
         ///Parse a mapping value in a flow context.
-        Event parseFlowValue(TokenID checkId, Event delegate() @safe nextState)
+        Event parseFlowValue(TokenID checkId, State nextState)
             @safe
         {
             if(scanner_.front.id == TokenID.value)
@@ -873,13 +914,13 @@ final class Parser
         Event parseFlowSequenceEntryMappingValue() @safe
         {
             return parseFlowValue(TokenID.flowSequenceEnd,
-                                  &parseFlowSequenceEntryMappingEnd);
+                                  State.parseFlowSequenceEntryMappingEnd);
         }
 
         ///Parse end of a mapping in a flow sequence entry.
         Event parseFlowSequenceEntryMappingEnd() @safe
         {
-            state_ = &parseFlowSequenceEntry!(No.first);
+            state_ = State.parseFlowSequenceEntryNo;
             const token = scanner_.front;
             return mappingEndEvent(token.startMark, token.startMark);
         }
@@ -893,6 +934,8 @@ final class Parser
          */
 
         ///Parse a key in a flow mapping.
+        alias parseFlowMappingKeyYes = parseFlowMappingKey!(Flag!"first".yes);
+        alias parseFlowMappingKeyNo = parseFlowMappingKey!(Flag!"first".no);
         Event parseFlowMappingKey(Flag!"first" first)() @safe
         {
             static if(first)
@@ -920,12 +963,12 @@ final class Parser
 
                 if(scanner_.front.id == TokenID.key)
                 {
-                    return parseFlowKey(&parseFlowMappingValue);
+                    return parseFlowKey(State.parseFlowMappingValue);
                 }
 
                 if(scanner_.front.id != TokenID.flowMappingEnd)
                 {
-                    pushState(&parseFlowMappingEmptyValue);
+                    pushState(State.parseFlowMappingEmptyValue);
                     return parseFlowNode();
                 }
             }
@@ -940,18 +983,18 @@ final class Parser
         ///Parse a value in a flow mapping.
         Event parseFlowMappingValue()  @safe
         {
-            return parseFlowValue(TokenID.flowMappingEnd, &parseFlowMappingKey!(No.first));
+            return parseFlowValue(TokenID.flowMappingEnd, State.parseFlowMappingKeyNo);
         }
 
         ///Parse an empty value in a flow mapping.
         Event parseFlowMappingEmptyValue() @safe
         {
-            state_ = &parseFlowMappingKey!(No.first);
+            state_ = State.parseFlowMappingKeyNo;
             return processEmptyScalar(scanner_.front.startMark);
         }
 
         ///Return an empty scalar.
-        Event processEmptyScalar(const Mark mark) @safe pure nothrow const @nogc
+        Event processEmptyScalar(const ParsePosition mark) @safe pure nothrow const @nogc
         {
             return scalarEvent(mark, mark, null, null, true, "");
         }

@@ -19,11 +19,10 @@ import dyaml.emitter;
 import dyaml.event;
 import dyaml.exception;
 import dyaml.linebreak;
-import dyaml.node;
+import mir.algebraic_alias.yaml;
 import dyaml.representer;
 import dyaml.resolver;
 import dyaml.serializer;
-import dyaml.style;
 import dyaml.tagdirective;
 
 
@@ -68,10 +67,10 @@ struct Dumper
         //Name of the output file or stream, used in error messages.
         string name = "<unknown>";
 
-        // Default style for scalar nodes. If style is $(D ScalarStyle.invalid), the _style is chosen automatically.
-        ScalarStyle defaultScalarStyle = ScalarStyle.invalid;
-        // Default style for collection nodes. If style is $(D CollectionStyle.invalid), the _style is chosen automatically.
-        CollectionStyle defaultCollectionStyle = CollectionStyle.invalid;
+        // Default style for scalar nodes. If style is $(D YamlScalarStyle.invalid), the _style is chosen automatically.
+        YamlScalarStyle defaultScalarStyle = YamlScalarStyle.invalid;
+        // Default style for collection nodes. If style is $(D YamlCollectionStyle.invalid), the _style is chosen automatically.
+        YamlCollectionStyle defaultCollectionStyle = YamlCollectionStyle.invalid;
 
         @disable bool opEquals(ref Dumper);
         @disable int opCmp(ref Dumper);
@@ -128,7 +127,7 @@ struct Dumper
             //This will emit tags starting with "tag:long.org,2011"
             //with a "!short!" prefix instead.
             dumper.tagDirectives(directives);
-            dumper.dump(new Appender!string(), Node("foo"));
+            dumper.dump(new Appender!string(), YamlAlgebraic("foo"));
         }
 
         /**
@@ -140,16 +139,15 @@ struct Dumper
          *
          * Params:  documents = Documents to _dump (root nodes of the _documents).
          *
-         * Throws:  YAMLException on error (e.g. invalid nodes,
+         * Throws:  YamlException on error (e.g. invalid nodes,
          *          unable to write to file/stream).
          */
-        void dump(CharacterType = char, Range)(Range range, Node[] documents ...)
-            if (isOutputRange!(Range, CharacterType) &&
-                isOutputRange!(Range, char) || isOutputRange!(Range, wchar) || isOutputRange!(Range, dchar))
+        void dump(Range)(Range range, YamlAlgebraic[] documents ...)
+            if (isOutputRange!(Range, char))
         {
             try
             {
-                auto emitter = new Emitter!(Range, CharacterType)(range, canonical, indent_, textWidth, lineBreak);
+                auto emitter = new Emitter!Range(range, canonical, indent_, textWidth, lineBreak);
                 auto serializer = Serializer(resolver, explicitStart ? Yes.explicitStart : No.explicitStart,
                                              explicitEnd ? Yes.explicitEnd : No.explicitEnd, YAMLVersion, tags_);
                 serializer.startStream(emitter);
@@ -160,9 +158,9 @@ struct Dumper
                 }
                 serializer.endStream(emitter);
             }
-            catch(YAMLException e)
+            catch(YamlException e)
             {
-                throw new YAMLException("Unable to dump YAML to stream "
+                throw new YamlException("Unable to dump YAML to stream "
                                         ~ name ~ " : " ~ e.msg, e.file, e.line);
             }
         }
@@ -170,14 +168,14 @@ struct Dumper
 ///Write to a file
 @safe unittest
 {
-    auto node = Node([1, 2, 3, 4, 5]);
+    auto node = YamlAlgebraic([1L, 2, 3, 4, 5]);
     dumper().dump(new Appender!string(), node);
 }
 ///Write multiple YAML documents to a file
 @safe unittest
 {
-    auto node1 = Node([1, 2, 3, 4, 5]);
-    auto node2 = Node("This document contains only one string");
+    auto node1 = YamlAlgebraic([1L, 2, 3, 4, 5]);
+    auto node2 = YamlAlgebraic("This document contains only one string");
     dumper().dump(new Appender!string(), node1, node2);
     //Or with an array:
     dumper().dump(new Appender!string(), [node1, node2]);
@@ -186,14 +184,14 @@ struct Dumper
 @safe unittest
 {
     auto stream = new Appender!string();
-    auto node = Node([1, 2, 3, 4, 5]);
+    auto node = YamlAlgebraic([1L, 2, 3, 4, 5]);
     dumper().dump(stream, node);
 }
 ///Use a custom resolver to support custom data types and/or implicit tags
 @safe unittest
 {
     import std.regex : regex;
-    auto node = Node([1, 2, 3, 4, 5]);
+    auto node = YamlAlgebraic([1L, 2, 3, 4, 5]);
     auto dumper = dumper();
     dumper.resolver.addImplicitResolver("!tag", regex("A.*"), "A");
     dumper.dump(new Appender!string(), node);
@@ -202,39 +200,39 @@ struct Dumper
 @safe unittest
 {
     auto stream = new Appender!string();
-    auto node = Node("Hello world!");
+    auto node = YamlAlgebraic("Hello world!");
     auto dumper = dumper();
-    dumper.defaultScalarStyle = ScalarStyle.singleQuoted;
+    dumper.defaultScalarStyle = YamlScalarStyle.singleQuoted;
     dumper.dump(stream, node);
 }
 /// Set default collection style
 @safe unittest
 {
     auto stream = new Appender!string();
-    auto node = Node(["Hello", "world!"]);
+    auto node = YamlAlgebraic(["Hello".YamlAlgebraic, "world!".YamlAlgebraic]);
     auto dumper = dumper();
-    dumper.defaultCollectionStyle = CollectionStyle.flow;
+    dumper.defaultCollectionStyle = YamlCollectionStyle.flow;
     dumper.dump(stream, node);
 }
 // Make sure the styles are actually used
 @safe unittest
 {
     auto stream = new Appender!string();
-    auto node = Node([Node("Hello world!"), Node(["Hello", "world!"])]);
+    auto node = YamlAlgebraic([YamlAlgebraic("Hello world!"), YamlAlgebraic(["Hello".YamlAlgebraic, "world!".YamlAlgebraic])]);
     auto dumper = dumper();
-    dumper.defaultScalarStyle = ScalarStyle.singleQuoted;
-    dumper.defaultCollectionStyle = CollectionStyle.flow;
+    dumper.defaultScalarStyle = YamlScalarStyle.singleQuoted;
+    dumper.defaultCollectionStyle = YamlCollectionStyle.flow;
     dumper.explicitEnd = false;
     dumper.explicitStart = false;
     dumper.YAMLVersion = null;
     dumper.dump(stream, node);
-    assert(stream.data == "['Hello world!', ['Hello', 'world!']]\n");
+    assert(stream.data == "['Hello world!', ['Hello', 'world!']]\n", stream.data);
 }
 // Explicit document start/end markers
 @safe unittest
 {
     auto stream = new Appender!string();
-    auto node = Node([1, 2, 3, 4, 5]);
+    auto node = YamlAlgebraic([1L, 2, 3, 4, 5]);
     auto dumper = dumper();
     dumper.explicitEnd = true;
     dumper.explicitStart = true;
@@ -248,7 +246,7 @@ struct Dumper
 @safe unittest
 {
     auto stream = new Appender!string();
-    auto node = Node([Node("Te, st2")]);
+    auto node = YamlAlgebraic([YamlAlgebraic("Te, st2")]);
     auto dumper = dumper();
     dumper.explicitStart = true;
     dumper.explicitEnd = false;
@@ -260,7 +258,7 @@ struct Dumper
 @safe unittest
 {
     auto stream = new Appender!string();
-    auto node = Node([1, 2, 3, 4, 5]);
+    auto node = YamlAlgebraic([1L, 2, 3, 4, 5]);
     auto dumper = dumper();
     dumper.explicitEnd = false;
     dumper.explicitStart = false;
@@ -274,7 +272,7 @@ struct Dumper
 // Windows, macOS line breaks
 @safe unittest
 {
-    auto node = Node(0);
+    auto node = YamlAlgebraic(0);
     {
         auto stream = new Appender!string();
         auto dumper = dumper();
@@ -283,7 +281,7 @@ struct Dumper
         dumper.YAMLVersion = null;
         dumper.lineBreak = LineBreak.windows;
         dumper.dump(stream, node);
-        assert(stream.data == "--- 0\r\n...\r\n");
+        assert(stream.data == "--- 0\r\n...\r\n", stream.data);
     }
     {
         auto stream = new Appender!string();

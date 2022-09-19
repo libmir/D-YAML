@@ -48,7 +48,7 @@ import dyaml;
 void main()
 {
     //Read the input.
-    Node root = Loader.fromFile("input.yaml").load();
+    YamlAlgebraic root = Loader.fromFile("input.yaml").load();
 
     //Display the data read.
     foreach(string word; root["Hello World"])
@@ -70,39 +70,39 @@ you need to import - it automatically imports all needed modules.
 Next we load the file using the *Loader.fromFile().load()* method. *Loader* is a
 struct used for parsing YAML documents. The *fromFile()* method loads the
 document from a file. The *load()* method loads the
-file as **one** YAML document, or throws *YAMLException*, D:YAML
+file as **one** YAML document, or throws *YamlException*, D:YAML
 exception type, if the file could not be parsed or contains more than
 one document. Note that we don't do any error checking here in order to
 keep the example as simple as possible.
 
-*Node* represents a node in a YAML document. It can be a sequence
+*YamlAlgebraic* represents a node in a YAML document. It can be a sequence
 (array), mapping (associative array) or a scalar (value). Here the root
 node is a mapping, and we use the index operator to get subnodes with
 keys "Hello World" and "Answer". We iterate over the former, as it is a
-sequence, and use the *Node.as()* method on the latter to read its value
+sequence, and use the *YamlAlgebraic.as()* method on the latter to read its value
 as an integer.
 
 You can iterate over a mapping or sequence as if it was an associative
 or normal array, respectively. If you try to iterate over a scalar, it
-will throw a *YAMLException*.
+will throw a *YamlException*.
 
-You can iterate using *Node* as the iterated type, or specify the type
+You can iterate using *YamlAlgebraic* as the iterated type, or specify the type
 iterated nodes are expected to have. D:YAML will automatically convert
 to that type if possible. Here we specify the *string* type, so we
 iterate over the "Hello World" sequence as an array of strings. If it is
-not possible to convert to iterated type, a *YAMLException* is thrown.
+not possible to convert to iterated type, a *YamlException* is thrown.
 For instance, if we specified *int* here, we would get an error, as
 "Hello" cannot be converted to an integer.
 
-The *Node.as()* method is used to read value of a scalar node as
+The *YamlAlgebraic.as()* method is used to read value of a scalar node as
 specified type. If the scalar does not have the specified type, D:YAML
-will try to convert it, throwing *YAMLException* if not possible.
+will try to convert it, throwing *YamlException* if not possible.
 
 Finally we dump the document we just read to `output.yaml` with the
 *Dumper.dump()* method. *Dumper* is a struct used to dump YAML
 documents. *dumper()* accepts a range to write the document to.
 The *dump()* method writes one or more documents to the range,
-throwing *YAMLException* if it could not be written to.
+throwing *YamlException* if it could not be written to.
 
 D:YAML tries to preserve style information in documents so e.g. `[Hello,
 World]` is not turned into:

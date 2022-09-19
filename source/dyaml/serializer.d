@@ -18,7 +18,7 @@ import std.typecons;
 import dyaml.emitter;
 import dyaml.event;
 import dyaml.exception;
-import dyaml.node;
+import mir.algebraic_alias.yaml;
 import dyaml.resolver;
 import dyaml.tagdirective;
 import dyaml.token;
@@ -45,9 +45,9 @@ struct Serializer
 
         //TODO Use something with more deterministic memory usage.
         ///Nodes with assigned anchors.
-        string[Node] anchors_;
+        string[YamlAlgebraic] anchors_;
         ///Nodes with assigned anchors that are already serialized.
-        bool[Node] serializedNodes_;
+        bool[YamlAlgebraic] serializedNodes_;
         ///ID of the last anchor generated.
         uint lastAnchorID_ = 0;
 
@@ -77,26 +77,26 @@ struct Serializer
         ///Begin the stream.
         void startStream(EmitterT)(ref EmitterT emitter) @safe
         {
-            emitter.emit(streamStartEvent(Mark(), Mark()));
+            emitter.emit(streamStartEvent(ParsePosition(), ParsePosition()));
         }
 
         ///End the stream.
         void endStream(EmitterT)(ref EmitterT emitter) @safe
         {
-            emitter.emit(streamEndEvent(Mark(), Mark()));
+            emitter.emit(streamEndEvent(ParsePosition(), ParsePosition()));
         }
 
         ///Serialize a node, emitting it in the process.
-        void serialize(EmitterT)(ref EmitterT emitter, ref Node node) @safe
+        void serialize(EmitterT)(ref EmitterT emitter, ref YamlAlgebraic node) @safe
         {
-            emitter.emit(documentStartEvent(Mark(), Mark(), explicitStart_,
+            emitter.emit(documentStartEvent(ParsePosition(), ParsePosition(), explicitStart_,
                                              YAMLVersion_, tagDirectives_));
             anchorNode(node);
             serializeNode(emitter, node);
-            emitter.emit(documentEndEvent(Mark(), Mark(), explicitEnd_));
-            serializedNodes_.destroy();
-            anchors_.destroy();
-            string[Node] emptyAnchors;
+            emitter.emit(documentEndEvent(ParsePosition(), ParsePosition(), explicitEnd_));
+            serializedNodes_ = null;
+            anchors_ = null;
+            string[YamlAlgebraic] emptyAnchors;
             anchors_ = emptyAnchors;
             lastAnchorID_ = 0;
         }
@@ -108,19 +108,22 @@ struct Serializer
          * Used to prevent associating every single repeating scalar with an
          * anchor/alias - only nodes long enough can use anchors.
          *
-         * Params:  node = Node to check for anchorability.
+         * Params:  node = YamlAlgebraic to check for anchorability.
          *
          * Returns: True if the node is anchorable, false otherwise.
          */
-        static bool anchorable(ref Node node) @safe
+        static bool anchorable(ref YamlAlgebraic node) @safe
         {
-            if(node.nodeID == NodeID.scalar)
-            {
-                return (node.type == NodeType.string) ? node.as!string.length > 64 :
-                       (node.type == NodeType.binary) ? node.as!(ubyte[]).length > 64 :
-                                               false;
-            }
-            return node.length > 2;
+            import mir.algebraic: visit;
+            return node.visit!
+                (
+                    (string s) => s.length > 64,
+                    (Blob s) => s.data.length > 64,
+                    (YamlAlgebraic[] s) => s.length > 2,
+                    (YamlMap s) => s.length > 2,
+                    (s) => false,
+                    (typeof(null)) => false,
+                );
         }
 
         @safe unittest
@@ -128,12 +131,12 @@ struct Serializer
             import std.string : representation;
             auto shortString = "not much";
             auto longString = "A fairly long string that would be a good idea to add an anchor to";
-            auto node1 = Node(shortString);
-            auto node2 = Node(shortString.representation.dup);
-            auto node3 = Node(longString);
-            auto node4 = Node(longString.representation.dup);
-            auto node5 = Node([node1]);
-            auto node6 = Node([node1, node2, node3, node4]);
+            auto node1 = YamlAlgebraic(shortString);
+            auto node2 = YamlAlgebraic(shortString.representation.dup);
+            auto node3 = YamlAlgebraic(longString);
+            auto node4 = YamlAlgebraic(longString.representation.dup);
+            auto node5 = YamlAlgebraic([node1]);
+            auto node6 = YamlAlgebraic([node1, node2, node3, node4]);
             assert(!anchorable(node1));
             assert(!anchorable(node2));
             assert(anchorable(node3));
@@ -143,7 +146,7 @@ struct Serializer
         }
 
         ///Add an anchor to the node if it's anchorable and not anchored yet.
-        void anchorNode(ref Node node) @safe
+        void anchorNode(ref YamlAlgebraic node) @safe
         {
             if(!anchorable(node)){return;}
 
@@ -157,24 +160,23 @@ struct Serializer
             }
 
             anchors_.remove(node);
-            final switch (node.nodeID)
+            switch (node.kind)
             {
-                case NodeID.mapping:
-                    foreach(ref Node key, ref Node value; node)
+                case YamlAlgebraic.Kind.object:
+                    foreach(ref pair; node.get!"object".pairs) with(pair)
                     {
                         anchorNode(key);
                         anchorNode(value);
                     }
                     break;
-                case NodeID.sequence:
-                    foreach(ref Node item; node)
+                case YamlAlgebraic.Kind.array:
+                    foreach(ref YamlAlgebraic item; node.get!"array")
                     {
                         anchorNode(item);
                     }
                     break;
-                case NodeID.invalid:
-                    assert(0);
-                case NodeID.scalar:
+                default:
+                    break;
             }
         }
 
@@ -188,7 +190,7 @@ struct Serializer
         }
 
         ///Serialize a node and all its subnodes.
-        void serializeNode(EmitterT)(ref EmitterT emitter, ref Node node) @safe
+        void serializeNode(EmitterT)(ref EmitterT emitter, ref YamlAlgebraic node) @safe
         {
             //If the node has an anchor, emit an anchor (as aliasEvent) on the
             //first occurrence, save it in serializedNodes_, and emit an alias
@@ -199,47 +201,45 @@ struct Serializer
                 aliased = anchors_[node];
                 if((node in serializedNodes_) !is null)
                 {
-                    emitter.emit(aliasEvent(Mark(), Mark(), aliased));
+                    emitter.emit(aliasEvent(ParsePosition(), ParsePosition(), aliased));
                     return;
                 }
                 serializedNodes_[node] = true;
             }
-            final switch (node.nodeID)
+            switch (node.kind)
             {
-                case NodeID.mapping:
+                case YamlAlgebraic.Kind.object:
                     const defaultTag = resolver_.defaultMappingTag;
-                    const implicit = node.tag_ == defaultTag;
-                    emitter.emit(mappingStartEvent(Mark(), Mark(), aliased, node.tag_,
+                    const implicit = node.tag == defaultTag;
+                    emitter.emit(mappingStartEvent(ParsePosition(), ParsePosition(), aliased, node.tag,
                                                     implicit, node.collectionStyle));
-                    foreach(ref Node key, ref Node value; node)
+                    foreach(ref pair; node.get!"object".pairs) with(pair)
                     {
                         serializeNode(emitter, key);
                         serializeNode(emitter, value);
                     }
-                    emitter.emit(mappingEndEvent(Mark(), Mark()));
+                    emitter.emit(mappingEndEvent(ParsePosition(), ParsePosition()));
                     return;
-                case NodeID.sequence:
+                case YamlAlgebraic.Kind.array:
                     const defaultTag = resolver_.defaultSequenceTag;
-                    const implicit = node.tag_ == defaultTag;
-                    emitter.emit(sequenceStartEvent(Mark(), Mark(), aliased, node.tag_,
+                    const implicit = node.tag == defaultTag;
+                    emitter.emit(sequenceStartEvent(ParsePosition(), ParsePosition(), aliased, node.tag,
                                                      implicit, node.collectionStyle));
-                    foreach(ref Node item; node)
+                    foreach(ref YamlAlgebraic item; node.get!"array")
                     {
                         serializeNode(emitter, item);
                     }
-                    emitter.emit(sequenceEndEvent(Mark(), Mark()));
+                    emitter.emit(sequenceEndEvent(ParsePosition(), ParsePosition()));
                     return;
-                case NodeID.scalar:
-                    assert(node.type == NodeType.string, "Scalar node type must be string before serialized");
-                    auto value = node.as!string;
-                    const detectedTag = resolver_.resolve(NodeID.scalar, null, value, true);
-                    const bool isDetected = node.tag_ == detectedTag;
+                default:
+                    assert(node.kind == YamlAlgebraic.Kind.string, "Scalar node type must be string before serialized");
+                    auto value = node.get!string;
+                    const detectedTag = resolver_.resolve(node.kind, null, value, true);
+                    const bool isDetected = node.tag == detectedTag;
 
-                    emitter.emit(scalarEvent(Mark(), Mark(), aliased, node.tag_,
+                    emitter.emit(scalarEvent(ParsePosition(), ParsePosition(), aliased, node.tag,
                                   isDetected, value, node.scalarStyle));
                     return;
-                case NodeID.invalid:
-                    assert(0);
             }
         }
 }
@@ -248,72 +248,72 @@ struct Serializer
 @safe unittest
 {
     import dyaml.dumper : dumper;
-    auto node = Node([
-        Node.Pair(
-            Node(""),
-            Node([
-                Node([
-                    Node.Pair(
-                        Node("d"),
-                        Node([
-                            Node([
-                                Node.Pair(
-                                    Node("c"),
-                                    Node("")
+    auto node = YamlAlgebraic([
+        YamlPair(
+            YamlAlgebraic(""),
+            YamlAlgebraic([
+                YamlAlgebraic([
+                    YamlPair(
+                        ("d"),
+                        YamlAlgebraic([
+                            YamlAlgebraic([
+                                YamlPair(
+                                    ("c"),
+                                    ("")
                                 ),
-                                Node.Pair(
-                                    Node("b"),
-                                    Node("")
+                                YamlPair(
+                                    ("b"),
+                                    ("")
                                 ),
-                                Node.Pair(
-                                    Node(""),
-                                    Node("")
+                                YamlPair(
+                                    (""),
+                                    ("")
                                 )
                             ])
                         ])
                     ),
                 ]),
-                Node([
-                    Node.Pair(
-                        Node("d"),
-                        Node([
-                            Node(""),
-                            Node(""),
-                            Node([
-                                Node.Pair(
-                                    Node("c"),
-                                    Node("")
+                YamlAlgebraic([
+                    YamlPair(
+                        ("d"),
+                        YamlAlgebraic([
+                            YamlAlgebraic(""),
+                            YamlAlgebraic(""),
+                            YamlAlgebraic([
+                                YamlPair(
+                                    ("c"),
+                                    ("")
                                 ),
-                                Node.Pair(
-                                    Node("b"),
-                                    Node("")
+                                YamlPair(
+                                    ("b"),
+                                    ("")
                                 ),
-                                Node.Pair(
-                                    Node(""),
-                                    Node("")
+                                YamlPair(
+                                    (""),
+                                    ("")
                                 )
                             ])
                         ])
                     ),
-                    Node.Pair(
-                        Node("z"),
-                        Node("")
+                    YamlPair(
+                        ("z"),
+                        ("")
                     ),
-                    Node.Pair(
-                        Node(""),
-                        Node("")
+                    YamlPair(
+                        (""),
+                        ("")
                     )
                 ]),
-                Node("")
+                YamlAlgebraic("")
             ])
         ),
-        Node.Pair(
-            Node("g"),
-            Node("")
+        YamlPair(
+            ("g"),
+            ("")
         ),
-        Node.Pair(
-            Node("h"),
-            Node("")
+        YamlPair(
+            ("h"),
+            ("")
         ),
     ]);
 

@@ -18,9 +18,9 @@ module dyaml.test.reader;
 
     Params:  data    = Stream to read.
     */
-    static void runReader(ubyte[] fileData) @safe
+    static void runReader(scope const(char)[] fileData) @safe
     {
-        auto reader = new Reader(fileData);
+        auto reader = Reader(fileData);
         while(reader.peek() != '\0') { reader.forward(); }
     }
 
@@ -31,7 +31,8 @@ module dyaml.test.reader;
     */
     static void testStreamError(string errorFilename) @safe
     {
-        assertThrown!ReaderException(runReader(readData(errorFilename)));
+        import std.utf: UTFException;
+        assertThrown!UTFException(runReader(readData(errorFilename)));
     }
     run(&testStreamError, ["stream-error"]);
 }

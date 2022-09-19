@@ -11,10 +11,9 @@ module dyaml.token;
 
 import std.conv;
 
-import dyaml.encoding;
 import dyaml.exception;
 import dyaml.reader;
-import dyaml.style;
+import mir.algebraic_alias.yaml: YamlScalarStyle, YamlCollectionStyle;
 
 
 package:
@@ -69,22 +68,19 @@ struct Token
     ///
     /// Values are char[] instead of string, as Parser may still change them in a few
     /// cases. Parser casts values to strings when producing Events.
-    char[] value;
+    const(char)[] value;
     // 4B
     /// Start position of the token in file/stream.
-    Mark startMark;
+    ParsePosition startMark;
     // 4B
     /// End position of the token in file/stream.
-    Mark endMark;
+    ParsePosition endMark;
     // 1B
     /// Token type.
     TokenID id;
     // 1B
     /// Style of scalar token, if this is a scalar token.
-    ScalarStyle style;
-    // 1B
-    /// Encoding, if this is a stream start token.
-    Encoding encoding;
+    YamlScalarStyle style;
     // 1B
     /// Type of directive for directiveToken.
     DirectiveType directive;
@@ -103,10 +99,10 @@ struct Token
 ///          value     = Value of the token.
 ///          directive = Directive type (YAML or TAG in YAML 1.1).
 ///          nameEnd = Position of the end of the name
-Token directiveToken(const Mark start, const Mark end, char[] value,
+Token directiveToken(const ParsePosition start, const ParsePosition end, const(char)[] value,
                      DirectiveType directive, const uint nameEnd) @safe pure nothrow @nogc
 {
-    return Token(value, start, end, TokenID.directive, ScalarStyle.init, Encoding.init,
+    return Token(value, start, end, TokenID.directive, YamlScalarStyle.init,
                  directive, nameEnd);
 }
 
@@ -115,7 +111,7 @@ Token directiveToken(const Mark start, const Mark end, char[] value,
 /// Params:  id    = Type of the token.
 ///          start = Start position of the token.
 ///          end   = End position of the token.
-Token simpleToken(TokenID id)(const Mark start, const Mark end)
+Token simpleToken(TokenID id)(const ParsePosition start, const ParsePosition end)
 {
     return Token(null, start, end, id);
 }
@@ -125,9 +121,9 @@ Token simpleToken(TokenID id)(const Mark start, const Mark end)
 /// Params:  start    = Start position of the token.
 ///          end      = End position of the token.
 ///          encoding = Encoding of the stream.
-Token streamStartToken(const Mark start, const Mark end, const Encoding encoding) @safe pure nothrow @nogc
+Token streamStartToken(const ParsePosition start, const ParsePosition end) @safe pure nothrow @nogc
 {
-    return Token(null, start, end, TokenID.streamStart, ScalarStyle.invalid, encoding);
+    return Token(null, start, end, TokenID.streamStart, YamlScalarStyle.invalid);
 }
 
 /// Aliases for construction of simple token types.
@@ -148,10 +144,10 @@ alias flowEntryToken = simpleToken!(TokenID.flowEntry);
 ///          value        = Value of the token.
 ///          valueDivider = A hack for TagToken to store 2 values in value; the first
 ///                         value goes up to valueDivider, the second after it.
-Token simpleValueToken(TokenID id)(const Mark start, const Mark end, char[] value,
+Token simpleValueToken(TokenID id)(const ParsePosition start, const ParsePosition end, const(char)[] value,
                                    const uint valueDivider = uint.max)
 {
-    return Token(value, start, end, id, ScalarStyle.invalid, Encoding.init,
+    return Token(value, start, end, id, YamlScalarStyle.invalid,
                  DirectiveType.init, valueDivider);
 }
 
@@ -166,7 +162,7 @@ alias anchorToken = simpleValueToken!(TokenID.anchor);
 ///          end   = End position of the token.
 ///          value = Value of the token.
 ///          style = Style of the token.
-Token scalarToken(const Mark start, const Mark end, char[] value, const ScalarStyle style) @safe pure nothrow @nogc
+Token scalarToken(const ParsePosition start, const ParsePosition end, const(char)[] value, const YamlScalarStyle style) @safe pure nothrow @nogc
 {
     return Token(value, start, end, TokenID.scalar, style);
 }

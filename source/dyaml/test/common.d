@@ -9,7 +9,7 @@ module dyaml.test.common;
 version(unittest)
 {
 
-import dyaml.node;
+import mir.algebraic_alias.yaml;
 import dyaml.event;
 
 import core.exception;
@@ -76,15 +76,15 @@ Params:
 
 Returns: The file's data.
 */
-ubyte[] readData(string filename) @trusted
+const(char)[] readData(string filename) @trusted
 {
     import std.file : read;
-    return cast(ubyte[])read(filename);
+    return readText(filename);
 }
-void assertNodesEqual(const scope Node gotNode, const scope Node expectedNode) @safe
+void assertNodesEqual(const scope YamlAlgebraic gotNode, const scope YamlAlgebraic expectedNode, string file = __FILE__, int line = __LINE__) @trusted
 {
-    import std.format : format;
-    assert(gotNode == expectedNode, format!"got %s, expected %s"(gotNode.debugString, expectedNode.debugString));
+    import mir.test;
+    gotNode.should == expectedNode;
 }
 
 /**

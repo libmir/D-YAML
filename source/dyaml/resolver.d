@@ -20,7 +20,7 @@ import std.regex;
 import std.typecons;
 import std.utf;
 
-import dyaml.node;
+import mir.algebraic_alias.yaml;
 import dyaml.exception;
 
 
@@ -132,22 +132,6 @@ struct Resolver
                 yamlImplicitResolvers_[c] ~= tuple(tag, regexp);
             }
         }
-        /// Resolve scalars starting with 'A' to !_tag
-        @safe unittest
-        {
-            import std.file : write;
-            import std.regex : regex;
-            import dyaml.loader : Loader;
-            import dyaml.resolver : Resolver;
-
-            write("example.yaml", "A");
-
-            auto loader = Loader.fromFile("example.yaml");
-            loader.resolver.addImplicitResolver("!tag", regex("A.*"), "A");
-
-            auto node = loader.load();
-            assert(node.tag == "!tag");
-        }
 
     package:
         /**
@@ -163,7 +147,7 @@ struct Resolver
          *
          * Returns: Resolved tag.
          */
-        string resolve(const NodeID kind, const string tag, scope string value,
+        string resolve(const YamlAlgebraic.Kind kind, const string tag, scope string value,
                     const bool implicit) @safe
         {
             import std.array : empty, front;
@@ -172,9 +156,9 @@ struct Resolver
                 return tag;
             }
 
-            final switch (kind)
+            switch (kind)
             {
-                case NodeID.scalar:
+                default:
                     if(!implicit)
                     {
                         return defaultScalarTag_;
@@ -201,12 +185,10 @@ struct Resolver
                         }
                     }
                     return defaultScalarTag_;
-            case NodeID.sequence:
+            case YamlAlgebraic.Kind.array:
                 return defaultSequenceTag_;
-            case NodeID.mapping:
+            case YamlAlgebraic.Kind.object:
                 return defaultMappingTag_;
-            case NodeID.invalid:
-                assert(false, "Cannot resolve an invalid node");
             }
         }
         @safe unittest
@@ -218,7 +200,7 @@ struct Resolver
                 const string expected = tag;
                 foreach(value; values)
                 {
-                    const string resolved = resolver.resolve(NodeID.scalar, null, value, true);
+                    const string resolved = resolver.resolve(YamlAlgebraic.Kind.string, null, value, true);
                     if(expected != resolved)
                     {
                         return false;

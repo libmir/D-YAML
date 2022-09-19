@@ -15,32 +15,30 @@ import mir.timestamp;
 import std.algorithm;
 import std.array;
 import std.base64;
-import std.container;
 import std.conv;
 import std.exception;
 import std.regex;
 import std.string;
 import std.utf;
 
-import dyaml.node;
+import mir.algebraic_alias.yaml;
 import dyaml.exception;
-import dyaml.style;
 
 package:
 
 // Exception thrown at constructor errors.
-class ConstructorException : YAMLException
+class ConstructorException : YamlException
 {
     /// Construct a ConstructorException.
     ///
     /// Params:  msg   = Error message.
     ///          start = Start position of the error context.
     ///          end   = End position of the error context.
-    this(string msg, Mark start, Mark end, string file = __FILE__, size_t line = __LINE__)
+    this(string msg, ParsePosition start, ParsePosition end, string file = __FILE__, size_t line = __LINE__)
         @safe pure nothrow
     {
-        super(msg ~ "\nstart: " ~ start.toString() ~ "\nend: " ~ end.toString(),
-              file, line);
+        import mir.format: text;
+        super(text(msg, "\nstart: ", start, "\nend: ", end), file, line);
     }
 }
 
@@ -69,107 +67,122 @@ class ConstructorException : YAMLException
  *
  * Returns: Constructed node.
  */
-Node constructNode(T)(const Mark start, const Mark end, const string tag,
+YamlAlgebraic constructNode(T)(const ParsePosition start, const ParsePosition end, const string tag,
                 T value) @safe
-    if((is(T : string) || is(T == Node[]) || is(T == Node.Pair[])))
+    if((is(T : string) || is(T == YamlAlgebraic[]) || is(T == YamlPair[])))
 {
-    Node newNode;
+    YamlAlgebraic newNode;
     try
     {
         switch(tag)
         {
             case "tag:yaml.org,2002:null":
-                newNode = Node(null, tag);
+                newNode = YamlAlgebraic(null);
+                newNode.tag = tag;
                 break;
             case "tag:yaml.org,2002:bool":
                 static if(is(T == string))
                 {
-                    newNode = Node(constructBool(value), tag);
+                    newNode = YamlAlgebraic(constructBool(value));
+                    newNode.tag = tag;
                     break;
                 }
                 else throw new Exception("Only scalars can be bools");
             case "tag:yaml.org,2002:int":
                 static if(is(T == string))
                 {
-                    newNode = Node(constructLong(value), tag);
+                    newNode = YamlAlgebraic(constructLong(value));
+                    newNode.tag = tag;
                     break;
                 }
                 else throw new Exception("Only scalars can be ints");
             case "tag:yaml.org,2002:float":
                 static if(is(T == string))
                 {
-                    newNode = Node(constructReal(value), tag);
+                    newNode = YamlAlgebraic(constructReal(value));
+                    newNode.tag = tag;
                     break;
                 }
                 else throw new Exception("Only scalars can be floats");
             case "tag:yaml.org,2002:binary":
                 static if(is(T == string))
                 {
-                    newNode = Node(constructBinary(value), tag);
+                    newNode = YamlAlgebraic(constructBinary(value));
+                    newNode.tag = tag;
                     break;
                 }
                 else throw new Exception("Only scalars can be binary data");
             case "tag:yaml.org,2002:timestamp":
                 static if(is(T == string))
                 {
-                    newNode = Node(constructTimestamp(value), tag);
+                    newNode = YamlAlgebraic(constructTimestamp(value));
+                    newNode.tag = tag;
                     break;
                 }
                 else throw new Exception("Only scalars can be timestamps");
             case "tag:yaml.org,2002:str":
                 static if(is(T == string))
                 {
-                    newNode = Node(constructString(value), tag);
+                    newNode = YamlAlgebraic(constructString(value));
+                    newNode.tag = tag;
                     break;
                 }
                 else throw new Exception("Only scalars can be strings");
             case "tag:yaml.org,2002:value":
                 static if(is(T == string))
                 {
-                    newNode = Node(constructString(value), tag);
+                    newNode = YamlAlgebraic(constructString(value));
+                    newNode.tag = tag;
                     break;
                 }
                 else throw new Exception("Only scalars can be values");
             case "tag:yaml.org,2002:omap":
-                static if(is(T == Node[]))
+                static if(is(T == YamlAlgebraic[]))
                 {
-                    newNode = Node(constructOrderedMap(value), tag);
+                    newNode = YamlAlgebraic(constructOrderedMap(value));
+                    newNode.tag = tag;
                     break;
                 }
                 else throw new Exception("Only sequences can be ordered maps");
             case "tag:yaml.org,2002:pairs":
-                static if(is(T == Node[]))
+                static if(is(T == YamlAlgebraic[]))
                 {
-                    newNode = Node(constructPairs(value), tag);
+                    newNode = YamlAlgebraic(constructPairs(value));
+                    newNode.tag = tag;
                     break;
                 }
                 else throw new Exception("Only sequences can be pairs");
             case "tag:yaml.org,2002:set":
-                static if(is(T == Node.Pair[]))
+                static if(is(T == YamlPair[]))
                 {
-                    newNode = Node(constructSet(value), tag);
+                    newNode = YamlAlgebraic(constructSet(value));
+                    newNode.tag = tag;
                     break;
                 }
                 else throw new Exception("Only mappings can be sets");
             case "tag:yaml.org,2002:seq":
-                static if(is(T == Node[]))
+                static if(is(T == YamlAlgebraic[]))
                 {
-                    newNode = Node(constructSequence(value), tag);
+                    newNode = YamlAlgebraic(constructSequence(value));
+                    newNode.tag = tag;
                     break;
                 }
                 else throw new Exception("Only sequences can be sequences");
             case "tag:yaml.org,2002:map":
-                static if(is(T == Node.Pair[]))
+                static if(is(T == YamlPair[]))
                 {
-                    newNode = Node(constructMap(value), tag);
+                    newNode = YamlAlgebraic(constructMap(value));
+                    newNode.tag = tag;
                     break;
                 }
                 else throw new Exception("Only mappings can be maps");
-            case "tag:yaml.org,2002:merge":
-                newNode = Node(YAMLMerge(), tag);
-                break;
+            // case "tag:yaml.org,2002:merge":
+            //     newNode = YamlAlgebraic(YAMLMerge());
+            //     newNode.tag = tag;
+            //     break;
             default:
-                newNode = Node(value, tag);
+                newNode = YamlAlgebraic(value);
+                newNode.tag = tag;
                 break;
         }
     }
@@ -179,7 +192,7 @@ Node constructNode(T)(const Mark start, const Mark end, const string tag,
                         ~ ":\n" ~ e.msg, start, end);
     }
 
-    newNode.startMark_ = start;
+    newNode.startMark = start;
 
     return newNode;
 }
@@ -324,7 +337,8 @@ double constructReal(const string str) @safe
 }
 
 // Construct a binary (base64) _node.
-ubyte[] constructBinary(const string value) @safe
+import mir.lob: Blob;
+Blob constructBinary(const string value) @safe
 {
     import std.ascii : newline;
     import std.array : array;
@@ -332,7 +346,7 @@ ubyte[] constructBinary(const string value) @safe
     // For an unknown reason, this must be nested to work (compiler bug?).
     try
     {
-        return Base64.decode(value.representation.filter!(c => !newline.canFind(c)).array);
+        return Base64.decode(value.representation.filter!(c => !newline.canFind(c)).array).Blob;
     }
     catch(Base64Exception e)
     {
@@ -347,8 +361,8 @@ ubyte[] constructBinary(const string value) @safe
     buffer.length = 256;
     string input = Base64.encode(test, buffer).idup;
     const value = constructBinary(input);
-    assert(value == test);
-    assert(value == [84, 104, 101, 32, 65, 110, 115, 119, 101, 114, 58, 32, 52, 50]);
+    assert(value.data == test);
+    assert(value.data == [84, 104, 101, 32, 65, 110, 115, 119, 101, 114, 58, 32, 52, 50]);
 }
 
 // Construct a timestamp _node.
@@ -453,59 +467,52 @@ string constructString(const string str) @safe
 }
 
 // Convert a sequence of single-element mappings into a sequence of pairs.
-Node.Pair[] getPairs(string type, const Node[] nodes) @safe
+YamlPair[] getPairs(string type, const YamlAlgebraic[] nodes) @safe
 {
-    Node.Pair[] pairs;
+    YamlPair[] pairs;
     pairs.reserve(nodes.length);
     foreach(node; nodes)
     {
-        enforce(node.nodeID == NodeID.mapping && node.length == 1,
+        enforce(node.kind == YamlAlgebraic.Kind.object && node.get!"object".length == 1,
                 new Exception("While constructing " ~ type ~
                               ", expected a mapping with single element"));
 
-        pairs ~= node.as!(Node.Pair[]);
+        pairs ~= node.get!"object".pairs;
     }
 
     return pairs;
 }
 
 // Construct an ordered map (ordered sequence of key:value pairs without duplicates) _node.
-Node.Pair[] constructOrderedMap(const Node[] nodes) @safe
+YamlPair[] constructOrderedMap(const YamlAlgebraic[] nodes) @safe
 {
     auto pairs = getPairs("ordered map", nodes);
-
-    //Detect duplicates.
-    //TODO this should be replaced by something with deterministic memory allocation.
-    auto keys = redBlackTree!Node();
-    foreach(ref pair; pairs)
-    {
-        enforce(!(pair.key in keys),
-                new Exception("Duplicate entry in an ordered map: "
-                              ~ pair.key.debugString()));
-        keys.insert(pair.key);
-    }
+    import dyaml.representer: hasDuplicates;
+    if (pairs.hasDuplicates)
+        throw new Exception("Duplicate entry in an ordered map");
     return pairs;
 }
+
 @safe unittest
 {
-    Node[] alternateTypes(uint length) @safe
+    YamlAlgebraic[] alternateTypes(uint length) @safe
     {
-        Node[] pairs;
+        YamlAlgebraic[] pairs;
         foreach(long i; 0 .. length)
         {
-            auto pair = (i % 2) ? Node.Pair(i.to!string, i) : Node.Pair(i, i.to!string);
-            pairs ~= Node([pair]);
+            auto pair = (i % 2) ? YamlPair(i.to!string, i) : YamlPair(i, i.to!string);
+            pairs ~= YamlAlgebraic([pair].dup);
         }
         return pairs;
     }
 
-    Node[] sameType(uint length) @safe
+    static auto sameType(uint length) @safe
     {
-        Node[] pairs;
+        YamlAlgebraic[] pairs;
         foreach(long i; 0 .. length)
         {
-            auto pair = Node.Pair(i.to!string, i);
-            pairs ~= Node([pair]);
+            auto pair = YamlPair(i.to!string, i);
+            pairs ~= YamlAlgebraic([pair].dup);
         }
         return pairs;
     }
@@ -519,19 +526,19 @@ Node.Pair[] constructOrderedMap(const Node[] nodes) @safe
 }
 
 // Construct a pairs (ordered sequence of key: value pairs allowing duplicates) _node.
-Node.Pair[] constructPairs(const Node[] nodes) @safe
+YamlPair[] constructPairs(const YamlAlgebraic[] nodes) @safe
 {
     return getPairs("pairs", nodes);
 }
 
 // Construct a set _node.
-Node[] constructSet(const Node.Pair[] pairs) @safe
+YamlAlgebraic[] constructSet(const YamlPair[] pairs) @safe
 {
     // In future, the map here should be replaced with something with deterministic
     // memory allocation if possible.
     // Detect duplicates.
-    ubyte[Node] map;
-    Node[] nodes;
+    ubyte[YamlAlgebraic] map;
+    YamlAlgebraic[] nodes;
     nodes.reserve(pairs.length);
     foreach(pair; pairs)
     {
@@ -544,12 +551,12 @@ Node[] constructSet(const Node.Pair[] pairs) @safe
 }
 @safe unittest
 {
-    Node.Pair[] set(uint length) @safe
+    YamlPair[] set(uint length) @safe
     {
-        Node.Pair[] pairs;
+        YamlPair[] pairs;
         foreach(long i; 0 .. length)
         {
-            pairs ~= Node.Pair(i.to!string, null);
+            pairs ~= YamlPair(i.to!string, null);
         }
 
         return pairs;
@@ -560,7 +567,7 @@ Node[] constructSet(const Node.Pair[] pairs) @safe
     auto DuplicatesLong    = set(64) ~ set(4);
     auto noDuplicatesLong  = set(64);
 
-    bool eq(Node.Pair[] a, Node[] b)
+    bool eq(YamlPair[] a, YamlAlgebraic[] b)
     {
         if(a.length != b.length){return false;}
         foreach(i; 0 .. a.length)
@@ -585,22 +592,18 @@ Node[] constructSet(const Node.Pair[] pairs) @safe
 }
 
 // Construct a sequence (array) _node.
-Node[] constructSequence(Node[] nodes) @safe
+YamlAlgebraic[] constructSequence(YamlAlgebraic[] nodes) @safe
 {
     return nodes;
 }
 
 // Construct an unordered map (unordered set of key:value _pairs without duplicates) _node.
-Node.Pair[] constructMap(Node.Pair[] pairs) @safe
+YamlPair[] constructMap(YamlPair[] pairs) @safe
 {
     //Detect duplicates.
     //TODO this should be replaced by something with deterministic memory allocation.
-    auto keys = redBlackTree!Node();
-    foreach(ref pair; pairs)
-    {
-        enforce(!(pair.key in keys),
-                new Exception("Duplicate entry in a map: " ~ pair.key.debugString()));
-        keys.insert(pair.key);
-    }
+    import dyaml.representer: hasDuplicates;
+    if (pairs.hasDuplicates)
+        throw new Exception("Duplicate entry in a map");
     return pairs;
 }

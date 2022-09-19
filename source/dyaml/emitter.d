@@ -23,16 +23,14 @@ import std.system;
 import std.typecons;
 import std.utf;
 
-import dyaml.encoding;
 import dyaml.escapes;
 import dyaml.event;
 import dyaml.exception;
 import dyaml.linebreak;
 import dyaml.queue;
 import dyaml.scanner;
-import dyaml.style;
 import dyaml.tagdirective;
-
+import mir.algebraic_alias.yaml: YamlScalarStyle, YamlCollectionStyle;
 
 package:
 
@@ -67,7 +65,7 @@ private alias isFlowIndicator = among!(',', '?', '[', ']', '{', '}');
 private alias isSpace = among!('\0', '\n', '\r', '\u0085', '\u2028', '\u2029', ' ', '\t');
 
 //Emits YAML events into a file/stream.
-struct Emitter(Range, CharType) if (isOutputRange!(Range, CharType))
+struct Emitter(Range) if (isOutputRange!(Range, char))
 {
     private:
         ///Default tag handle shortcuts and replacements.
@@ -150,7 +148,7 @@ struct Emitter(Range, CharType) if (isOutputRange!(Range, CharType))
         ///Analysis result of the current scalar.
         ScalarAnalysis analysis_;
         ///Style of the current scalar.
-        ScalarStyle style_ = ScalarStyle.invalid;
+        YamlScalarStyle style_ = YamlScalarStyle.invalid;
 
     public:
         @disable int opCmp(ref Emitter);
@@ -188,7 +186,7 @@ struct Emitter(Range, CharType) if (isOutputRange!(Range, CharType))
             {
                 event_ = events_.pop();
                 callNext();
-                event_.destroy();
+                event_ = event_.init;
             }
         }
 
@@ -222,20 +220,7 @@ struct Emitter(Range, CharType) if (isOutputRange!(Range, CharType))
         ///Write a string to the file/stream.
         void writeString(const scope char[] str) @safe
         {
-            static if(is(CharType == char))
-            {
-                copy(str, stream_);
-            }
-            static if(is(CharType == wchar))
-            {
-                const buffer = to!wstring(str);
-                copy(buffer, stream_);
-            }
-            static if(is(CharType == dchar))
-            {
-                const buffer = to!dstring(str);
-                copy(buffer, stream_);
-            }
+            copy(str, stream_);
         }
 
         ///In some cases, we wait for a few next events before emitting.
@@ -304,7 +289,6 @@ struct Emitter(Range, CharType) if (isOutputRange!(Range, CharType))
                 "Expected streamStart, but got " ~ event_.idString)
         {
 
-            writeStreamStart();
             nextExpected!"expectDocumentStart!(Yes.first)"();
         }
 
@@ -377,7 +361,6 @@ struct Emitter(Range, CharType) if (isOutputRange!(Range, CharType))
                     writeIndicator("...", Yes.needWhitespace);
                     writeIndent();
                 }
-                writeStreamEnd();
                 nextExpected!"expectNothing"();
             }
         }
@@ -423,7 +406,7 @@ struct Emitter(Range, CharType) if (isOutputRange!(Range, CharType))
         {
             context_ = context;
 
-            const flowCollection = event_.collectionStyle == CollectionStyle.flow;
+            const flowCollection = event_.collectionStyle == YamlCollectionStyle.flow;
 
             switch(event_.id)
             {
@@ -720,30 +703,30 @@ struct Emitter(Range, CharType) if (isOutputRange!(Range, CharType))
         void processScalar() @safe
         {
             if(analysis_.flags.isNull){analysis_ = analyzeScalar(event_.value);}
-            if(style_ == ScalarStyle.invalid)
+            if(style_ == YamlScalarStyle.invalid)
             {
                 style_ = chooseScalarStyle();
             }
 
             //if(analysis_.flags.multiline && (context_ != Context.mappingSimpleKey) &&
-            //   ([ScalarStyle.invalid, ScalarStyle.plain, ScalarStyle.singleQuoted, ScalarStyle.doubleQuoted)
+            //   ([YamlScalarStyle.invalid, YamlScalarStyle.plain, YamlScalarStyle.singleQuoted, YamlScalarStyle.doubleQuoted)
             //    .canFind(style_))
             //{
             //    writeIndent();
             //}
-            auto writer = ScalarWriter!(Range, CharType)(&this, analysis_.scalar,
+            auto writer = ScalarWriter!Range(&this, analysis_.scalar,
                                        context_ != Context.mappingSimpleKey);
             final switch(style_)
             {
-                case ScalarStyle.invalid:      assert(false);
-                case ScalarStyle.doubleQuoted: writer.writeDoubleQuoted(); break;
-                case ScalarStyle.singleQuoted: writer.writeSingleQuoted(); break;
-                case ScalarStyle.folded:       writer.writeFolded();       break;
-                case ScalarStyle.literal:      writer.writeLiteral();      break;
-                case ScalarStyle.plain:        writer.writePlain();        break;
+                case YamlScalarStyle.invalid:      assert(false);
+                case YamlScalarStyle.doubleQuoted: writer.writeDoubleQuoted(); break;
+                case YamlScalarStyle.singleQuoted: writer.writeSingleQuoted(); break;
+                case YamlScalarStyle.folded:       writer.writeFolded();       break;
+                case YamlScalarStyle.literal:      writer.writeLiteral();      break;
+                case YamlScalarStyle.plain:        writer.writePlain();        break;
             }
             analysis_.flags.isNull = true;
-            style_ = ScalarStyle.invalid;
+            style_ = YamlScalarStyle.invalid;
         }
 
         ///Process and write an anchor/alias.
@@ -773,9 +756,9 @@ struct Emitter(Range, CharType) if (isOutputRange!(Range, CharType))
 
             if(event_.id == EventID.scalar)
             {
-                if(style_ == ScalarStyle.invalid){style_ = chooseScalarStyle();}
+                if(style_ == YamlScalarStyle.invalid){style_ = chooseScalarStyle();}
                 if((!canonical_ || (tag is null)) &&
-                   ((tag == "tag:yaml.org,2002:str") || (style_ == ScalarStyle.plain ? event_.implicit : !event_.implicit && (tag is null))))
+                   ((tag == "tag:yaml.org,2002:str") || (style_ == YamlScalarStyle.plain ? event_.implicit : !event_.implicit && (tag is null))))
                 {
                     preparedTag_ = null;
                     return;
@@ -802,15 +785,15 @@ struct Emitter(Range, CharType) if (isOutputRange!(Range, CharType))
         }
 
         ///Determine style to write the current scalar in.
-        ScalarStyle chooseScalarStyle() @safe
+        YamlScalarStyle chooseScalarStyle() @safe
         {
             if(analysis_.flags.isNull){analysis_ = analyzeScalar(event_.value);}
 
             const style          = event_.scalarStyle;
-            const invalidOrPlain = style == ScalarStyle.invalid || style == ScalarStyle.plain;
-            const block          = style == ScalarStyle.literal || style == ScalarStyle.folded;
-            const singleQuoted   = style == ScalarStyle.singleQuoted;
-            const doubleQuoted   = style == ScalarStyle.doubleQuoted;
+            const invalidOrPlain = style == YamlScalarStyle.invalid || style == YamlScalarStyle.plain;
+            const block          = style == YamlScalarStyle.literal || style == YamlScalarStyle.folded;
+            const singleQuoted   = style == YamlScalarStyle.singleQuoted;
+            const doubleQuoted   = style == YamlScalarStyle.doubleQuoted;
 
             const allowPlain     = flowLevel_ > 0 ? analysis_.flags.allowFlowPlain
                                                   : analysis_.flags.allowBlockPlain;
@@ -820,12 +803,12 @@ struct Emitter(Range, CharType) if (isOutputRange!(Range, CharType))
 
             if(doubleQuoted || canonical_)
             {
-                return ScalarStyle.doubleQuoted;
+                return YamlScalarStyle.doubleQuoted;
             }
 
             if(invalidOrPlain && event_.implicit && !simpleNonPlain && allowPlain)
             {
-                return ScalarStyle.plain;
+                return YamlScalarStyle.plain;
             }
 
             if(block && flowLevel_ == 0 && context_ != Context.mappingSimpleKey &&
@@ -838,10 +821,10 @@ struct Emitter(Range, CharType) if (isOutputRange!(Range, CharType))
                analysis_.flags.allowSingleQuoted &&
                !(context_ == Context.mappingSimpleKey && analysis_.flags.multiline))
             {
-                return ScalarStyle.singleQuoted;
+                return YamlScalarStyle.singleQuoted;
             }
 
-            return ScalarStyle.doubleQuoted;
+            return YamlScalarStyle.doubleQuoted;
         }
 
         ///Prepare YAML version string for output.
@@ -1172,19 +1155,6 @@ struct Emitter(Range, CharType) if (isOutputRange!(Range, CharType))
 
         //Writers.
 
-        ///Start the YAML stream (write the unicode byte order mark).
-        void writeStreamStart() @safe
-        {
-            //Write BOM (except for UTF-8)
-            static if(is(CharType == wchar) || is(CharType == dchar))
-            {
-                stream_.put(cast(CharType)'\uFEFF');
-            }
-        }
-
-        ///End the YAML stream.
-        void writeStreamEnd() @safe {}
-
         ///Write an indicator (e.g. ":", "[", ">", etc.).
         void writeIndicator(const scope char[] indicator,
                             const Flag!"needWhitespace" needWhitespace,
@@ -1274,7 +1244,7 @@ struct Emitter(Range, CharType) if (isOutputRange!(Range, CharType))
 private:
 
 ///RAII struct used to write out scalar values.
-struct ScalarWriter(Range, CharType)
+struct ScalarWriter(Range)
 {
     invariant()
     {
@@ -1283,14 +1253,14 @@ struct ScalarWriter(Range, CharType)
     }
 
     private:
-        @disable int opCmp(ref Emitter!(Range, CharType));
-        @disable bool opEquals(ref Emitter!(Range, CharType));
+        @disable int opCmp(ref Emitter!Range);
+        @disable bool opEquals(ref Emitter!Range);
 
         ///Used as "null" UTF-32 character.
         static immutable dcharNone = dchar.max;
 
         ///Emitter used to emit the scalar.
-        Emitter!(Range, CharType)* emitter_;
+        Emitter!Range* emitter_;
 
         ///UTF-8 encoded text of the scalar to write.
         string text_;
@@ -1311,7 +1281,7 @@ struct ScalarWriter(Range, CharType)
 
     public:
         ///Construct a ScalarWriter using emitter to output text.
-        this(Emitter!(Range, CharType)* emitter, string text, const bool split = true) @safe nothrow
+        this(Emitter!Range* emitter, string text, const bool split = true) @safe nothrow
         {
             emitter_ = emitter;
             text_ = text;
@@ -1506,7 +1476,7 @@ struct ScalarWriter(Range, CharType)
         ///Write text as plain scalar.
         void writePlain() @safe
         {
-            if(emitter_.context_ == Emitter!(Range, CharType).Context.root){emitter_.openEnded_ = true;}
+            if(emitter_.context_ == Emitter!Range.Context.root){emitter_.openEnded_ = true;}
             if(text_ == ""){return;}
             if(!emitter_.whitespace_)
             {

@@ -16,7 +16,7 @@ import std.conv;
 import dyaml.exception;
 import dyaml.reader;
 import dyaml.tagdirective;
-import dyaml.style;
+import mir.algebraic_alias.yaml: YamlScalarStyle, YamlCollectionStyle;
 
 
 package:
@@ -48,10 +48,10 @@ struct Event
     ///Value of the event, if any.
     string value;
     ///Start position of the event in file/stream.
-    Mark startMark;
+    ParsePosition startMark;
     ///End position of the event in file/stream.
-    Mark endMark;
-    union
+    ParsePosition endMark;
+    struct
     {
         struct
         {
@@ -67,8 +67,8 @@ struct Event
     ///Event type.
     EventID id = EventID.invalid;
     ///Style of scalar event, if this is a scalar event.
-    ScalarStyle scalarStyle = ScalarStyle.invalid;
-    union
+    YamlScalarStyle scalarStyle = YamlScalarStyle.invalid;
+    struct
     {
         ///Should the tag be implicitly resolved?
         bool implicit;
@@ -80,7 +80,7 @@ struct Event
         bool explicitDocument;
     }
     ///Collection style, if this is a SequenceStart or MappingStart.
-    CollectionStyle collectionStyle = CollectionStyle.invalid;
+    YamlCollectionStyle collectionStyle = YamlCollectionStyle.invalid;
 
     ///Is this a null (uninitialized) event?
     @property bool isNull() const pure @safe nothrow {return id == EventID.invalid;}
@@ -111,7 +111,7 @@ struct Event
  *          end      = End position of the event in the file/stream.
  *          anchor   = Anchor, if this is an alias event.
  */
-Event event(EventID id)(const Mark start, const Mark end, const string anchor = null)
+Event event(EventID id)(const ParsePosition start, const ParsePosition end, const string anchor = null)
     @safe
     in(!(id == EventID.alias_ && anchor == ""), "Missing anchor for alias event")
 {
@@ -134,8 +134,8 @@ Event event(EventID id)(const Mark start, const Mark end, const string anchor = 
  *          style = Style to use when outputting document.
  */
 Event collectionStartEvent(EventID id)
-    (const Mark start, const Mark end, const string anchor, const string tag,
-     const bool implicit, const CollectionStyle style) pure @safe nothrow
+    (const ParsePosition start, const ParsePosition end, const string anchor, const string tag,
+     const bool implicit, const YamlCollectionStyle style) pure @safe nothrow
 {
     static assert(id == EventID.sequenceStart || id == EventID.sequenceEnd ||
                   id == EventID.mappingStart || id == EventID.mappingEnd);
@@ -156,7 +156,7 @@ Event collectionStartEvent(EventID id)
  * Params:  start    = Start position of the event in the file/stream.
  *          end      = End position of the event in the file/stream.
  */
-Event streamStartEvent(const Mark start, const Mark end)
+Event streamStartEvent(const ParsePosition start, const ParsePosition end)
     pure @safe nothrow
 {
     Event result;
@@ -185,7 +185,7 @@ alias mappingStartEvent = collectionStartEvent!(EventID.mappingStart);
  *          YAMLVersion   = YAML version string of the document.
  *          tagDirectives = Tag directives of the document.
  */
-Event documentStartEvent(const Mark start, const Mark end, const bool explicit, string YAMLVersion,
+Event documentStartEvent(const ParsePosition start, const ParsePosition end, const bool explicit, string YAMLVersion,
                          TagDirective[] tagDirectives) pure @safe nothrow
 {
     Event result;
@@ -205,7 +205,7 @@ Event documentStartEvent(const Mark start, const Mark end, const bool explicit, 
  *          end      = End position of the event in the file/stream.
  *          explicit = Is this an explicit document end?
  */
-Event documentEndEvent(const Mark start, const Mark end, const bool explicit) pure @safe nothrow
+Event documentEndEvent(const ParsePosition start, const ParsePosition end, const bool explicit) pure @safe nothrow
 {
     Event result;
     result.startMark        = start;
@@ -224,9 +224,9 @@ Event documentEndEvent(const Mark start, const Mark end, const bool explicit) pu
 ///          implicit = Should the tag be implicitly resolved?
 ///          value    = String value of the scalar.
 ///          style    = Scalar style.
-Event scalarEvent(const Mark start, const Mark end, const string anchor, const string tag,
+Event scalarEvent(const ParsePosition start, const ParsePosition end, const string anchor, const string tag,
                   const bool implicit, const string value,
-                  const ScalarStyle style = ScalarStyle.invalid) @safe pure nothrow @nogc
+                  const YamlScalarStyle style = YamlScalarStyle.invalid) @safe pure nothrow @nogc
 {
     Event result;
     result.value       = value;

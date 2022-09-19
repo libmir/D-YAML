@@ -13,7 +13,7 @@ module dyaml.test.representer;
     import std.path : baseName, stripExtension;
     import std.utf : toUTF8;
 
-    import dyaml : dumper, Loader, Node;
+    import dyaml : dumper, Loader, YamlAlgebraic;
     import dyaml.test.common : assertNodesEqual, run;
     import dyaml.test.constructor : expected;
 
@@ -27,24 +27,20 @@ module dyaml.test.representer;
     {
         assert((baseName in expected) !is null, "Unimplemented representer test: " ~ baseName);
 
-        Node[] expectedNodes = expected[baseName];
-        foreach (encoding; AliasSeq!(char, wchar, dchar))
+        YamlAlgebraic[] expectedNodes = expected[baseName];
+        auto emitStream = new Appender!string;
+        auto dumper = dumper();
+        dumper.dump(emitStream, expectedNodes);
+
+        immutable output = emitStream.data;
+
+        auto loader = Loader.fromString(emitStream.data.toUTF8, "TEST");
+        const readNodes = loader.loadAll;
+
+        assert(expectedNodes.length == readNodes.length);
+        foreach (n; 0 .. expectedNodes.length)
         {
-            auto emitStream = new Appender!(immutable(encoding)[]);
-            auto dumper = dumper();
-            dumper.dump!encoding(emitStream, expectedNodes);
-
-            immutable output = emitStream.data;
-
-            auto loader = Loader.fromString(emitStream.data.toUTF8);
-            loader.name = "TEST";
-            const readNodes = loader.array;
-
-            assert(expectedNodes.length == readNodes.length);
-            foreach (n; 0 .. expectedNodes.length)
-            {
-                assertNodesEqual(expectedNodes[n], readNodes[n]);
-            }
+            assertNodesEqual(expectedNodes[n], readNodes[n]);
         }
     }
     foreach (key, _; expected)

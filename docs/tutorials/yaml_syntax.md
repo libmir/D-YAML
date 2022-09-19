@@ -225,7 +225,7 @@ Implicit tags:
    name: Arthur Dent #string
 ```
 
-This table shows D types stored in *yaml.Node* default YAML tags are converted to.
+This table shows D types stored in *yaml.YamlAlgebraic* default YAML tags are converted to.
 Some of these might change in the future (especially !!map and !!set).
 
 |YAML tag               |D type                 |
@@ -236,6 +236,6 @@ Some of these might change in the future (especially !!map and !!set).
 |!!float                |double                 |
 |!!binary               |ubyte[]                |
 |!!timestamp            |mir.timestamp.Timestamp|
-|!!map, !!omap, !!pairs |dyaml.node.Node.Pair[] |
-|!!seq, !!set           |dyaml.node.Node[]      |
+|!!map, !!omap, !!pairs |mir.algebraic_alias.yaml.YamlPair[] |
+|!!seq, !!set           |mir.algebraic_alias.yaml.YamlAlgebraic[]      |
 |!!str                  |string                 |

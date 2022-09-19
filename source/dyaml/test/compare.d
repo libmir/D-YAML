@@ -37,8 +37,8 @@ module dyaml.test.compare;
     static void testLoader(string dataFilename, string canonicalFilename) @safe
     {
         import std.array : array;
-        auto data = Loader.fromFile(dataFilename).array;
-        auto canonical = Loader.fromFile(canonicalFilename).array;
+        auto data = Loader.fromFile(dataFilename).loadAll;
+        auto canonical = Loader.fromFile(canonicalFilename).loadAll;
 
         assert(data.length == canonical.length, "Unequal node count");
         foreach (n; 0 .. data.length)
