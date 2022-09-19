@@ -4,12 +4,12 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-module dyaml.test.compare;
+module mir.yaml.test.compare;
 
 @safe unittest
 {
-    import dyaml : Loader;
-    import dyaml.test.common : assertNodesEqual, compareEvents, run;
+    import mir.yaml : Loader;
+    import mir.yaml.test.common : assertNodesEqual, compareEvents, run;
 
     /**
     Test parser by comparing output from parsing two equivalent YAML files.

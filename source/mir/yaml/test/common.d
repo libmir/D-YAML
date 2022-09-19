@@ -4,13 +4,13 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-module dyaml.test.common;
+module mir.yaml.test.common;
 
 version(unittest)
 {
 
 import mir.algebraic_alias.yaml;
-import dyaml.event;
+import mir.yaml.event;
 
 import core.exception;
 import std.algorithm;
@@ -34,7 +34,7 @@ Params:
  */
 void run(D)(D testFunction, string[] unittestExt, string[] skipExt = [])
 {
-    immutable string dataDir = __FILE_FULL_PATH__.dirName ~  "/../../../test/data";
+    immutable string dataDir = __FILE_FULL_PATH__.dirName ~  "/../../../../test/data";
     auto testFilenames = findTestFilenames(dataDir);
 
     if (unittestExt.length > 0)

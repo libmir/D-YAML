@@ -1,4 +1,4 @@
-# Welcome to D:YAML documentation!
+# Welcome to `mir-yaml` documentation!
 
 Tutorials:
   - [Getting Started](tutorials/getting_started.md)

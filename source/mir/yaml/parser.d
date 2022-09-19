@@ -8,7 +8,7 @@
  * YAML parser.
  * Code based on PyYAML: http://www.pyyaml.org
  */
-module dyaml.parser;
+module mir.yaml.parser;
 
 
 import std.algorithm;
@@ -17,11 +17,11 @@ import std.conv;
 import std.exception;
 import std.typecons;
 
-import dyaml.event;
-import dyaml.exception;
-import dyaml.scanner;
-import dyaml.token;
-import dyaml.tagdirective;
+import mir.yaml.event;
+import mir.yaml.exception;
+import mir.yaml.scanner;
+import mir.yaml.token;
+import mir.yaml.tagdirective;
 import mir.algebraic_alias.yaml: YamlScalarStyle, YamlCollectionStyle;
 
 
@@ -103,7 +103,7 @@ class ParserException : MarkedYamlException
 ///
 /// While Parser receives tokens with non-const character slices, the events it
 /// produces are immutable strings, which are usually the same slices, cast to string.
-/// Parser is the last layer of D:YAML that may possibly do any modifications to these
+/// Parser is the last layer of `mir-yaml` that may possibly do any modifications to these
 /// slices.
 struct Parser
 {
@@ -574,7 +574,7 @@ struct Parser
                     continue;
                 }
 
-                import dyaml.escapes;
+                import mir.yaml.escapes;
                 scope(exit) { inEscape = false; }
 
                 // 'Normal' escape sequence.
@@ -586,16 +586,16 @@ struct Parser
                         // many-byte unicode chars
                         if(c != 'L' && c != 'P')
                         {
-                            appender.put(dyaml.escapes.fromEscape(c));
+                            appender.put(mir.yaml.escapes.fromEscape(c));
                             continue;
                         }
                         // Need to duplicate as we won't fit into
                         // token.value - which is what appender uses
                         notInPlace = appender.data.dup;
-                        notInPlace ~= dyaml.escapes.fromEscape(c);
+                        notInPlace ~= mir.yaml.escapes.fromEscape(c);
                         continue;
                     }
-                    notInPlace ~= dyaml.escapes.fromEscape(c);
+                    notInPlace ~= mir.yaml.escapes.fromEscape(c);
                     continue;
                 }
 
@@ -604,7 +604,7 @@ struct Parser
                 {
                     // Scanner has already checked that the hex string is valid.
 
-                    const hexLength = dyaml.escapes.escapeHexLength(c);
+                    const hexLength = mir.yaml.escapes.escapeHexLength(c);
                     // Any hex digits are 1-byte so this works.
                     const(char)[] hex = oldValue[0 .. hexLength];
                     oldValue = oldValue[hexLength .. $];

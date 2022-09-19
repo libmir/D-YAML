@@ -12,7 +12,7 @@
  *
  * Code based on $(LINK2 http://www.pyyaml.org, PyYAML).
  */
-module dyaml.resolver;
+module mir.yaml.resolver;
 
 
 import std.conv;
@@ -21,7 +21,7 @@ import std.typecons;
 import std.utf;
 
 import mir.algebraic_alias.yaml;
-import dyaml.exception;
+import mir.yaml.exception;
 
 
 /// Type of `regexes`
@@ -173,7 +173,7 @@ struct Resolver
                     //If regexp matches, return tag.
                     foreach(resolver; resolvers)
                     {
-                        // source/dyaml/resolver.d(192,35): Error: scope variable `__tmpfordtorXXX`
+                        // source/mir.yaml/resolver.d(192,35): Error: scope variable `__tmpfordtorXXX`
                         // assigned to non-scope parameter `this` calling
                         // `std.regex.RegexMatch!string.RegexMatch.~this`
                         bool isEmpty = () @trusted {

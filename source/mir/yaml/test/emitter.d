@@ -4,7 +4,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-module dyaml.test.emitter;
+module mir.yaml.test.emitter;
 import std.stdio;
 
 @safe unittest
@@ -12,10 +12,10 @@ import std.stdio;
     import std.array : appender, Appender;
     import std.range : ElementType, isInputRange;
 
-    import dyaml : YamlCollectionStyle, LineBreak, Loader, ParsePosition, YamlScalarStyle;
-    import dyaml.emitter : Emitter;
-    import dyaml.event : Event, EventID, mappingStartEvent, scalarEvent, sequenceStartEvent;
-    import dyaml.test.common : assertEventsEqual, compareEvents, run;
+    import mir.yaml : YamlCollectionStyle, LineBreak, Loader, ParsePosition, YamlScalarStyle;
+    import mir.yaml.emitter : Emitter;
+    import mir.yaml.event : Event, EventID, mappingStartEvent, scalarEvent, sequenceStartEvent;
+    import mir.yaml.test.common : assertEventsEqual, compareEvents, run;
 
     // Try to emit an event range.
     static void emitTestCommon(T)(ref Appender!string emitStream, T events, bool canonical = false) @safe

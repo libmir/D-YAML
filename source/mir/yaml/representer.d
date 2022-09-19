@@ -10,7 +10,7 @@
  *
  * Code based on $(LINK2 http://www.pyyaml.org, PyYAML).
  */
-module dyaml.representer;
+module mir.yaml.representer;
 
 
 import mir.conv;
@@ -23,13 +23,12 @@ import std.exception;
 import std.format;
 import std.string;
 
-import dyaml.exception;
+import mir.yaml.exception;
 import mir.algebraic_alias.yaml;
-import dyaml.serializer;
+import mir.yaml.serializer;
 
 package:
 
-version(unittest)
 auto withTag(YamlAlgebraic node, string tag)
 {
     node.tag = tag;

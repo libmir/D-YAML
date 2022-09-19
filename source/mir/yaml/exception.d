@@ -4,8 +4,8 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-///Exceptions thrown by D:YAML and _exception related code.
-module dyaml.exception;
+///Exceptions thrown by `mir-yaml` and _exception related code.
+module mir.yaml.exception;
 
 
 import std.algorithm;
@@ -14,7 +14,7 @@ import std.string;
 import std.conv;
 
 
-/// Base class for all exceptions thrown by D:YAML.
+/// Base class for all exceptions thrown by `mir-yaml`.
 class YamlException : Exception
 {
     /// Construct a YamlException with specified message and position where it was thrown.

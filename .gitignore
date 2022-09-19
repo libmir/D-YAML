@@ -64,7 +64,7 @@ example.yaml
 
 # Unittest Coverage output #
 *.lst
-dyaml-test-library
+mir_yaml-test-library
 examples/mir_serde/mir_serde
 examples/representer/representer-test-application
 examples/resolver/resolver-test-application

@@ -4,7 +4,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-module dyaml.test.constructor;
+module mir.yaml.test.constructor;
 
 
 version(unittest)
@@ -16,8 +16,8 @@ import std.exception;
 import std.path;
 import std.string;
 
-import dyaml : Loader, YamlAlgebraic, YamlPair;
-import dyaml.representer: withTag;
+import mir.yaml : Loader, YamlAlgebraic, YamlPair;
+import mir.yaml.representer: withTag;
 
 ///Expected results of loading test inputs.
 YamlAlgebraic[][string] expected;
@@ -879,7 +879,7 @@ struct TestStruct
 
 @safe unittest
 {
-    import dyaml.test.common : assertNodesEqual, run;
+    import mir.yaml.test.common : assertNodesEqual, run;
     /**
     Constructor unittest.
 

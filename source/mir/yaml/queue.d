@@ -4,7 +4,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-module dyaml.queue;
+module mir.yaml.queue;
 
 
 import std.traits : hasMember, hasIndirections;
@@ -13,7 +13,7 @@ package:
 
 /// Simple queue implemented as a singly linked list with a tail pointer.
 ///
-/// Needed in some D:YAML code that needs a queue-like structure without too much
+/// Needed in some `mir-yaml` code that needs a queue-like structure without too much
 /// reallocation that goes with an array.
 ///
 /// Allocations are non-GC and are damped by a free-list based on the nodes

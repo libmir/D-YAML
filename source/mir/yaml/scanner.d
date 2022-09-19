@@ -6,7 +6,7 @@
 
 /// YAML scanner.
 /// Code based on PyYAML: http://www.pyyaml.org
-module dyaml.scanner;
+module mir.yaml.scanner;
 
 
 import core.stdc.string;
@@ -21,11 +21,11 @@ import std.typecons;
 import std.traits : Unqual;
 import std.utf;
 
-import dyaml.escapes;
-import dyaml.exception;
-import dyaml.queue;
-import dyaml.reader;
-import dyaml.token;
+import mir.yaml.escapes;
+import mir.yaml.exception;
+import mir.yaml.queue;
+import mir.yaml.reader;
+import mir.yaml.token;
 import mir.algebraic_alias.yaml: YamlScalarStyle, YamlCollectionStyle;
 
 package:
@@ -1418,7 +1418,7 @@ struct Scanner
                     }
                     else if(c.among!(escapeHexCodeList))
                     {
-                        const hexLength = dyaml.escapes.escapeHexLength(c);
+                        const hexLength = mir.yaml.escapes.escapeHexLength(c);
                         reader_.forward();
 
                         foreach(i; 0 .. hexLength) {

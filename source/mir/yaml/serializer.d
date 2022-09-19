@@ -8,20 +8,20 @@
  * YAML serializer.
  * Code based on PyYAML: http://www.pyyaml.org
  */
-module dyaml.serializer;
+module mir.yaml.serializer;
 
 
 import std.array;
 import std.format;
 import std.typecons;
 
-import dyaml.emitter;
-import dyaml.event;
-import dyaml.exception;
+import mir.yaml.emitter;
+import mir.yaml.event;
+import mir.yaml.exception;
 import mir.algebraic_alias.yaml;
-import dyaml.resolver;
-import dyaml.tagdirective;
-import dyaml.token;
+import mir.yaml.resolver;
+import mir.yaml.tagdirective;
+import mir.yaml.token;
 
 
 package:
@@ -247,7 +247,7 @@ struct Serializer
 // Issue #244
 @safe unittest
 {
-    import dyaml.dumper : dumper;
+    import mir.yaml.dumper : dumper;
     auto node = YamlAlgebraic([
         YamlPair(
             YamlAlgebraic(""),

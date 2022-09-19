@@ -1,11 +1,11 @@
 # Getting started
 
-Welcome to D:YAML\! D:YAML is a
+Welcome to `mir-yaml`\! `mir-yaml` is a
 [YAML](http://en.wikipedia.org/wiki/YAML) parser library for the [D
 programming language](http://dlang.org). This tutorial will explain how
-to set D:YAML up and use it in your projects.
+to set `mir-yaml` up and use it in your projects.
 
-This is meant to be the **simplest possible** introduction to D:YAML.
+This is meant to be the **simplest possible** introduction to `mir-yaml`.
 Some of this information might already be known to you. Only basic usage
 is covered.
 
@@ -20,13 +20,13 @@ Download the version of DMD for your operating system and install it.
 Note: Other D compilers exist, such as [GDC](http://gdcproject.org/) and
 [LDC](https://github.com/ldc-developers/ldc).
 
-## Your first D:YAML project
+## Your first `mir-yaml` project
 
 First, create a directory for your project and navigate to that directory
 using your preferred command line. Then simply execute these two commands:
 
     dub init
-    dub add dyaml
+    dub add mir-yaml
 
 In that directory, create a new file named `input.yaml` and paste this data
 into the file:
@@ -43,7 +43,7 @@ following code into the file:
 
 ```D
 import std.stdio;
-import dyaml;
+import mir-yaml;
 
 void main()
 {
@@ -64,13 +64,13 @@ void main()
 
 ### Explanation of the code
 
-First, we import the *dyaml* module. This is the only D:YAML module
+First, we import the *mir-yaml* module. This is the only `mir-yaml` module
 you need to import - it automatically imports all needed modules.
 
 Next we load the file using the *Loader.fromFile().load()* method. *Loader* is a
 struct used for parsing YAML documents. The *fromFile()* method loads the
 document from a file. The *load()* method loads the
-file as **one** YAML document, or throws *YamlException*, D:YAML
+file as **one** YAML document, or throws *YamlException*, `mir-yaml`
 exception type, if the file could not be parsed or contains more than
 one document. Note that we don't do any error checking here in order to
 keep the example as simple as possible.
@@ -87,7 +87,7 @@ or normal array, respectively. If you try to iterate over a scalar, it
 will throw a *YamlException*.
 
 You can iterate using *YamlAlgebraic* as the iterated type, or specify the type
-iterated nodes are expected to have. D:YAML will automatically convert
+iterated nodes are expected to have. `mir-yaml` will automatically convert
 to that type if possible. Here we specify the *string* type, so we
 iterate over the "Hello World" sequence as an array of strings. If it is
 not possible to convert to iterated type, a *YamlException* is thrown.
@@ -95,7 +95,7 @@ For instance, if we specified *int* here, we would get an error, as
 "Hello" cannot be converted to an integer.
 
 The *YamlAlgebraic.as()* method is used to read value of a scalar node as
-specified type. If the scalar does not have the specified type, D:YAML
+specified type. If the scalar does not have the specified type, `mir-yaml`
 will try to convert it, throwing *YamlException* if not possible.
 
 Finally we dump the document we just read to `output.yaml` with the
@@ -104,7 +104,7 @@ documents. *dumper()* accepts a range to write the document to.
 The *dump()* method writes one or more documents to the range,
 throwing *YamlException* if it could not be written to.
 
-D:YAML tries to preserve style information in documents so e.g. `[Hello,
+`mir-yaml` tries to preserve style information in documents so e.g. `[Hello,
 World]` is not turned into:
 
 ```YAML
@@ -121,7 +121,7 @@ Run the following command in your project's directory:
 
     dub build
 
-DUB will automatically download D:YAML and compile it, and then it
+DUB will automatically download `mir-yaml` and compile it, and then it
 will compile our program. This will generate an executable called
 `getting-started` or `getting-started.exe` in your directory. When you
 run it, it should produce the following output:
@@ -134,7 +134,7 @@ You may also run ```dub run``` to combine the compile+run steps.
 
 ### Conclusion
 
-You should now have a basic idea about how to use D:YAML. To learn more,
+You should now have a basic idea about how to use `mir-yaml`. To learn more,
 look at the [API documentation](../) and other tutorials.
 You can find code for this example in the `example/getting_started`
 directory in the package.

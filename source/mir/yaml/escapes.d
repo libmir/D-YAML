@@ -5,7 +5,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-module dyaml.escapes;
+module mir.yaml.escapes;
 
 package:
 
@@ -95,7 +95,7 @@ uint escapeHexLength(dchar hexCode) @safe pure nothrow @nogc
 // for JSON compatibility
 @safe unittest
 {
-    import dyaml.loader : Loader;
+    import mir.yaml.loader : Loader;
 
     const str = `{
     "forward/slashes": "can\/be\/optionally\/escaped"

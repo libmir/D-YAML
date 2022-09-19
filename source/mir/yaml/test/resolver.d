@@ -4,7 +4,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-module dyaml.test.resolver;
+module mir.yaml.test.resolver;
 
 @safe unittest
 {
@@ -12,8 +12,8 @@ module dyaml.test.resolver;
     import std.file : readText;
     import std.string : strip;
 
-    import dyaml : Loader, YamlAlgebraic;
-    import dyaml.test.common : run;
+    import mir.yaml : Loader, YamlAlgebraic;
+    import mir.yaml.test.common : run;
 
 
     /**

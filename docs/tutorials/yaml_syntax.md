@@ -195,7 +195,7 @@ With `>`, the newlines between two non-empty lines are removed.
 Anchors and aliases can reduce size of YAML code by allowing you to define a
 value once, assign an anchor to it and use alias referring to that anchor
 anywhere else you need that value. It is possible to use this to create
-recursive data structures and some parsers support this; however, D:YAML does
+recursive data structures and some parsers support this; however, `mir-yaml` does
 not (this might change in the future, but it is unlikely).
 
 ```
@@ -208,7 +208,7 @@ not (this might change in the future, but it is unlikely).
 ## Tags
 
 Tags are identifiers that specify data types of YAML nodes. Most default YAML
-tags are resolved implicitly, so there is no need to specify them. D:YAML also
+tags are resolved implicitly, so there is no need to specify them. `mir-yaml` also
 supports implicit resolution for custom, user specified tags.
 
 Explicitly specified tags:

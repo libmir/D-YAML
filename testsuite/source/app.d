@@ -1,7 +1,7 @@
-module dyaml.testsuite;
+module mir.yaml.testsuite;
 
-import dyaml;
-import dyaml.event;
+import mir.yaml;
+import mir.yaml.event;
 
 import std.algorithm;
 import std.conv;

@@ -4,7 +4,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-module dyaml.test.tokens;
+module mir.yaml.test.tokens;
 
 @safe unittest
 {
@@ -12,10 +12,10 @@ module dyaml.test.tokens;
     import std.conv : text;
     import std.file : readText;
 
-    import dyaml.test.common : run;
-    import dyaml.reader : Reader;
-    import dyaml.scanner : Scanner;
-    import dyaml.token : TokenID;
+    import mir.yaml.test.common : run;
+    import mir.yaml.reader : Reader;
+    import mir.yaml.scanner : Scanner;
+    import mir.yaml.token : TokenID;
 
     // Read and scan a YAML doc, returning a range of tokens.
     static auto scanTestCommon(string filename) @safe

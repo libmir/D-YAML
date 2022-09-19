@@ -4,15 +4,15 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-module dyaml.test.errors;
+module mir.yaml.test.errors;
 
 @safe unittest
 {
     import std.array : array;
     import std.exception : assertThrown;
 
-    import dyaml : Loader;
-    import dyaml.test.common : run;
+    import mir.yaml : Loader;
+    import mir.yaml.test.common : run;
 
     /**
     Loader error unittest from file stream.

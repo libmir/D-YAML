@@ -4,7 +4,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-module dyaml.reader;
+module mir.yaml.reader;
 
 
 import core.stdc.stdlib;
@@ -21,7 +21,7 @@ import std.system;
 import std.typecons;
 import std.utf;
 
-import dyaml.exception;
+import mir.yaml.exception;
 
 alias isBreak = among!('\n', '\u0085', '\u2028', '\u2029');
 
@@ -730,7 +730,7 @@ void test1Byte(R)()
 //Issue 257 - https://github.com/dlang-community/D-YAML/issues/257
 @safe unittest
 {
-    import dyaml.loader : Loader;
+    import mir.yaml.loader : Loader;
     auto yaml = "hello ";
     auto root = Loader.fromString(yaml).load();
     assert(root._is!string);

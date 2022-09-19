@@ -7,35 +7,35 @@ subprojects = ['mir-core', 'mir-algorithm']
 has_cpp_headers = false
 
 sources_list = [
-    'dyaml/composer',
-    'dyaml/constructor',
-    'dyaml/dumper',
-    'dyaml/emitter',
-    'dyaml/escapes',
-    'dyaml/event',
-    'dyaml/exception',
-    'dyaml/linebreak',
-    'dyaml/loader',
-    'dyaml/package',
-    'dyaml/parser',
-    'dyaml/queue',
-    'dyaml/reader',
-    'dyaml/representer',
-    'dyaml/resolver',
-    'dyaml/scanner',
-    'dyaml/serializer',
-    'dyaml/tagdirective',
-    'dyaml/test/common',
-    'dyaml/test/compare',
-    'dyaml/test/constructor',
-    'dyaml/test/emitter',
-    'dyaml/test/errors',
-    'dyaml/test/inputoutput',
-    'dyaml/test/reader',
-    'dyaml/test/representer',
-    'dyaml/test/resolver',
-    'dyaml/test/tokens',
-    'dyaml/token',
+    'mir/yaml/composer',
+    'mir/yaml/constructor',
+    'mir/yaml/dumper',
+    'mir/yaml/emitter',
+    'mir/yaml/escapes',
+    'mir/yaml/event',
+    'mir/yaml/exception',
+    'mir/yaml/linebreak',
+    'mir/yaml/loader',
+    'mir/yaml/package',
+    'mir/yaml/parser',
+    'mir/yaml/queue',
+    'mir/yaml/reader',
+    'mir/yaml/representer',
+    'mir/yaml/resolver',
+    'mir/yaml/scanner',
+    'mir/yaml/serializer',
+    'mir/yaml/tagdirective',
+    'mir/yaml/test/common',
+    'mir/yaml/test/compare',
+    'mir/yaml/test/constructor',
+    'mir/yaml/test/emitter',
+    'mir/yaml/test/errors',
+    'mir/yaml/test/inputoutput',
+    'mir/yaml/test/reader',
+    'mir/yaml/test/representer',
+    'mir/yaml/test/resolver',
+    'mir/yaml/test/tokens',
+    'mir/yaml/token',
 ]
 
 sources = []
@@ -76,7 +76,7 @@ this_dep = declare_dependency(
     dependencies: required_deps,
 )
 
-test_versions = ['dyaml_test']
+test_versions = ['mir_yaml_test']
 
 if has_cpp_headers
     install_subdir('include/',

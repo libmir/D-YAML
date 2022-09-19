@@ -5,7 +5,7 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 /// Class used to load YAML documents.
-module dyaml.loader;
+module mir.yaml.loader;
 
 
 import std.exception;
@@ -13,16 +13,16 @@ import std.file;
 import std.stdio : File;
 import std.string;
 
-import dyaml.composer;
-import dyaml.constructor;
-import dyaml.event;
-import dyaml.exception;
+import mir.yaml.composer;
+import mir.yaml.constructor;
+import mir.yaml.event;
+import mir.yaml.exception;
 import mir.algebraic_alias.yaml;
-import dyaml.parser;
-import dyaml.reader;
-import dyaml.resolver;
-import dyaml.scanner;
-import dyaml.token;
+import mir.yaml.parser;
+import mir.yaml.reader;
+import mir.yaml.resolver;
+import mir.yaml.scanner;
+import mir.yaml.token;
 
 
 /** Loads YAML documents from files or string.
@@ -99,16 +99,16 @@ struct Loader
          *
          * Params: yamlData = Buffer with YAML data to load. This may be e.g. a file
          *                    loaded to memory or a string with YAML data. Note that
-         *                    buffer $(B will) be overwritten, as D:YAML minimizes
+         *                    buffer $(B will) be overwritten, as `mir-yaml` minimizes
          *                    memory allocations by reusing the input _buffer.
          *                    $(B Must not be deleted or modified by the user  as long
          *                    as nodes loaded by this Loader are in use!) - Nodes may
          *                    refer to data in this buffer.
          *
-         * Note that D:YAML looks for byte-order-marks YAML files encoded in
+         * Note that `mir-yaml` looks for byte-order-marks YAML files encoded in
          * UTF-16/UTF-32 (and sometimes UTF-8) use to specify the encoding and
          * endianness, so it should be enough to load an entire file to a buffer and
-         * pass it to D:YAML, regardless of Unicode encoding.
+         * pass it to `mir-yaml`, regardless of Unicode encoding.
          *
          * Throws:  YamlException if yamlData contains data illegal in YAML.
          */

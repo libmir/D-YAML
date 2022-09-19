@@ -4,14 +4,14 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-module dyaml.test.reader;
+module mir.yaml.test.reader;
 
 @safe unittest
 {
     import std.exception :assertThrown;
 
-    import dyaml.test.common : readData, run;
-    import dyaml.reader : Reader, ReaderException;
+    import mir.yaml.test.common : readData, run;
+    import mir.yaml.reader : Reader, ReaderException;
 
     /**
     Try reading entire file through Reader, expecting an error (the file is invalid).

@@ -1,4 +1,4 @@
-# D:YAML - Mir Fork
+# `mir-yaml` - Mir Fork
 
 [![Build Status](https://github.com/libmir/mir-yaml/actions/workflows/d.yml/badge.svg)](https://github.com/libmir/mir-yaml/actions)
 [![Circle CI](https://circleci.com/gh/libmir/mir-yaml.svg?style=svg)](https://circleci.com/gh/libmir/mir-yaml)
@@ -7,11 +7,11 @@
 
 ## Introduction
 
-D:YAML is an open source YAML parser and emitter library for the D programming language.
+`mir-yaml` is an open source YAML parser and emitter library for the D programming language.
 It is [almost](docs/articles/spec_differences.md) compliant to the YAML 1.1 specification.
-D:YAML is based on [PyYAML](http://www.pyyaml.org) created by Kirill Simonov.
+`mir-yaml` is based on [PyYAML](http://www.pyyaml.org) created by Kirill Simonov.
 
-D:YAML is designed to be easy to use while supporting the full feature set of YAML.
+`mir-yaml` is designed to be easy to use while supporting the full feature set of YAML.
 To start using it in your project, see the [Getting Started](docs/tutorials/getting_started.md) tutorial.
 
 ## Mir specific Features
@@ -52,7 +52,7 @@ To start using it in your project, see the [Getting Started](docs/tutorials/gett
 | `./`          | This README, utility scripts.  |
 | `./docs`      | Documentation.                 |
 | `./source`    | Source code.                   |
-| `./examples/` | Example projects using D:YAML. |
+| `./examples/` | Example projects using `mir-yaml`. |
 | `./test`      | Unittest data.                 |
 
 ## Installing and tutorial
@@ -60,9 +60,9 @@ To start using it in your project, see the [Getting Started](docs/tutorials/gett
 See the [Getting Started](docs/tutorials/getting_started.html).
 Tutorial and other tutorials that can be found in the in the [`docs` directory](docs/).
 
-API documentation is available [here](https://mir-yaml.dpldocs.info/dyaml.html).
+API documentation is available [here](https://mir-yaml.dpldocs.info/mir-yaml.html).
 
 ## Credits
 
-D:YAML was created by Ferdinand Majerech aka Kiith-Sa and is handled by the [dlang-community](https://github.com/dlang-community) organization since 2017, and [libmir](https://github.com/libmir) organization since 2021.
+`mir-yaml` was created by Ferdinand Majerech aka Kiith-Sa and is handled by the [dlang-community](https://github.com/dlang-community) organization since 2017, and [libmir](https://github.com/libmir) organization since 2021.
 Parts of code based on [PyYAML](http://www.pyyaml.org) created by Kirill Simonov.

@@ -8,12 +8,12 @@ the topic of this tutorial.
 Each YAML node has a tag specifying its type. For instance: strings use
 the tag `tag:yaml.org,2002:str`. Tags of most default types are
 *implicitly resolved* during parsing - you don't need to specify tag for
-each float, integer, etc. D:YAML can also implicitly resolve custom
+each float, integer, etc. `mir-yaml` can also implicitly resolve custom
 tags, as we will show later.
 
 ## Constructor
 
-D:YAML supports conversion to user-defined types. Adding a constructor to read
+`mir-yaml` supports conversion to user-defined types. Adding a constructor to read
 the data from the node is all that is needed.
 
 We will implement support for an RGB color type. It is implemented as
@@ -134,13 +134,13 @@ First we load the YAML document, and then have the resulting *YamlAlgebraic*s co
 to Colors via their constructor.
 
 You can find the source code for what we've done so far in the
-`examples/constructor` directory in the D:YAML package.
+`examples/constructor` directory in the `mir-yaml` package.
 
 ## Resolver
 
-Specifying tag for every color can be tedious. D:YAML can implicitly
+Specifying tag for every color can be tedious. `mir-yaml` can implicitly
 resolve scalar tags using regular expressions. This is how default types
-are resolved. We will use the [Resolver](../api/dyaml.resolver.html)
+are resolved. We will use the [Resolver](../api/mir-yaml.resolver.html)
 class to add implicit tag resolution for the Color data type (in its
 scalar form).
 
@@ -182,7 +182,7 @@ and test the example. If everything went as expected, it should report
 success.
 
 You can find the complete code in the `examples/resolver` directory in
-the D:YAML package.
+the `mir-yaml` package.
 
 ## Representer
 
@@ -253,4 +253,4 @@ We construct a *Dumper* to file `output.yaml`. Then, we create a simple node
 containing a sequence of colors and finally, we dump it.
 
 Source code for this section can be found in the `examples/representer`
-directory of the D:YAML package.
+directory of the `mir-yaml` package.

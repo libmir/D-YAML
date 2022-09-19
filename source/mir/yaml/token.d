@@ -6,13 +6,13 @@
 
 /// YAML tokens.
 /// Code based on PyYAML: http://www.pyyaml.org
-module dyaml.token;
+module mir.yaml.token;
 
 
 import std.conv;
 
-import dyaml.exception;
-import dyaml.reader;
+import mir.yaml.exception;
+import mir.yaml.reader;
 import mir.algebraic_alias.yaml: YamlScalarStyle, YamlCollectionStyle;
 
 

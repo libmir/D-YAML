@@ -8,7 +8,7 @@
  * Composes nodes from YAML events provided by parser.
  * Code based on PyYAML: http://www.pyyaml.org
  */
-module dyaml.composer;
+module mir.yaml.composer;
 
 import core.memory;
 
@@ -19,12 +19,12 @@ import std.exception;
 import std.range;
 import std.typecons;
 
-import dyaml.constructor;
-import dyaml.event;
-import dyaml.exception;
+import mir.yaml.constructor;
+import mir.yaml.event;
+import mir.yaml.exception;
 import mir.algebraic_alias.yaml;
-import dyaml.parser;
-import dyaml.resolver;
+import mir.yaml.parser;
+import mir.yaml.resolver;
 
 
 package:
@@ -384,7 +384,7 @@ struct Composer
 // Provide good error message on multiple keys (which JSON supports)
 @safe unittest
 {
-    import dyaml.loader : Loader;
+    import mir.yaml.loader : Loader;
 
     const str = `{
     "comment": "This is a common technique",

@@ -4,7 +4,7 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-module dyaml.test.representer;
+module mir.yaml.test.representer;
 
 @safe unittest
 {
@@ -13,15 +13,15 @@ module dyaml.test.representer;
     import std.path : baseName, stripExtension;
     import std.utf : toUTF8;
 
-    import dyaml : dumper, Loader, YamlAlgebraic;
-    import dyaml.test.common : assertNodesEqual, run;
-    import dyaml.test.constructor : expected;
+    import mir.yaml : dumper, Loader, YamlAlgebraic;
+    import mir.yaml.test.common : assertNodesEqual, run;
+    import mir.yaml.test.constructor : expected;
 
     /**
     Representer unittest. Dumps nodes, then loads them again.
 
     Params:
-        baseName = Nodes in dyaml.test.constructor.expected for roundtripping.
+        baseName = Nodes in mir.yaml.test.constructor.expected for roundtripping.
     */
     static void testRepresenterTypes(string baseName) @safe
     {

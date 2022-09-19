@@ -1,11 +1,11 @@
-# Differences between D:YAML and the YAML specification
+# Differences between `mir-yaml` and the YAML specification
 
-There are some differences between D:YAML and the YAML 1.1
+There are some differences between `mir-yaml` and the YAML 1.1
 specification. Some are caused by difficulty of implementation of some
 features, such as multiple Unicode encodings within single stream, and
 some by unnecessary restrictions or ambiguities in the specification.
 
-Still, D:YAML tries to be as close to the specification as possible. It
+Still, `mir-yaml` tries to be as close to the specification as possible. It
 should never load documents with different meaning than according to the
 specification, and documents that fail to load should be very rare (for
 instance, very few files use multiple Unicode encodings).
@@ -40,7 +40,7 @@ Differences that can cause valid YAML documents not to load:
   - The specification is confusing about tabs in plain scalars. We don't
     use tabs in plain scalars at all.
 
-  - There is no support for recursive data structures in DYAML.
+  - There is no support for recursive data structures in Mir YAML.
 
 Other differences:
 
@@ -58,7 +58,7 @@ Other differences:
 
   - Right now, two mappings with the same contents but different
     orderings are considered unequal, even if they are unordered
-    mappings. This is because all mappings are ordered in the D:YAML
+    mappings. This is because all mappings are ordered in the `mir-yaml`
     implementation. This should change in future, once D associative
     arrays work with variant types or a map class or struct appears in
     Phobos.

@@ -7,7 +7,7 @@
  * YAML emitter.
  * Code based on PyYAML: http://www.pyyaml.org
  */
-module dyaml.emitter;
+module mir.yaml.emitter;
 
 
 import std.algorithm;
@@ -23,13 +23,13 @@ import std.system;
 import std.typecons;
 import std.utf;
 
-import dyaml.escapes;
-import dyaml.event;
-import dyaml.exception;
-import dyaml.linebreak;
-import dyaml.queue;
-import dyaml.scanner;
-import dyaml.tagdirective;
+import mir.yaml.escapes;
+import mir.yaml.event;
+import mir.yaml.exception;
+import mir.yaml.linebreak;
+import mir.yaml.queue;
+import mir.yaml.scanner;
+import mir.yaml.tagdirective;
 import mir.algebraic_alias.yaml: YamlScalarStyle, YamlCollectionStyle;
 
 package:

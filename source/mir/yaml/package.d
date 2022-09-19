@@ -3,11 +3,11 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-module dyaml;
+module mir.yaml;
 
-public import dyaml.dumper;
-public import dyaml.exception;
-public import dyaml.linebreak;
-public import dyaml.loader;
-public import dyaml.resolver;
+public import mir.yaml.dumper;
+public import mir.yaml.exception;
+public import mir.yaml.linebreak;
+public import mir.yaml.loader;
+public import mir.yaml.resolver;
 public import mir.algebraic_alias.yaml;

@@ -9,21 +9,21 @@
  *
  * Code based on $(LINK2 http://www.pyyaml.org, PyYAML).
  */
-module dyaml.dumper;
+module mir.yaml.dumper;
 
 import std.array;
 import std.range.primitives;
 import std.typecons;
 
-import dyaml.emitter;
-import dyaml.event;
-import dyaml.exception;
-import dyaml.linebreak;
+import mir.yaml.emitter;
+import mir.yaml.event;
+import mir.yaml.exception;
+import mir.yaml.linebreak;
 import mir.algebraic_alias.yaml;
-import dyaml.representer;
-import dyaml.resolver;
-import dyaml.serializer;
-import dyaml.tagdirective;
+import mir.yaml.representer;
+import mir.yaml.resolver;
+import mir.yaml.serializer;
+import mir.yaml.tagdirective;
 
 
 /**
