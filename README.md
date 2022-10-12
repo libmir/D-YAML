@@ -1,3 +1,5 @@
+NOTE: Mir's YAML was moved to https://github.com/libmir/mir-ion
+
 # `mir-yaml` - Mir Fork
 
 [![Build Status](https://github.com/libmir/mir-yaml/actions/workflows/d.yml/badge.svg)](https://github.com/libmir/mir-yaml/actions)
